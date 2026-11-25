@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas del RIPA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Dirección: carta náutica nocturna. Mar profundo, señales de babor (rojo), estribor (verde) y bandera amarilla como acento. Rejilla: barra lateral de navegación + área de trabajo con escenario a la izquierda y apuntes a la derecha. */
+:root{
+  --bg:#06101c;--panel:#0b1b2d;--panel2:#10263c;--line:#1f3d5a;--line2:#2c5073;
+  --ink:#e8f0f8;--ink2:#a9bccf;--ink3:#7690aa;
+  --sig:#f5c542;--port:#ff5566;--stbd:#27e08c;--info:#6fb7ff;--cyan:#7cf0ff;--warn:#ff9f43;
+  --fd:'Barlow Condensed','Arial Narrow',sans-serif;--fb:'IBM Plex Sans',system-ui,sans-serif;--fm:'IBM Plex Mono',ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--fb);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--fd);font-weight:700;letter-spacing:.01em;margin:0;text-wrap:balance}
+p{margin:0}
+button,select,input{font:inherit;color:inherit}
+a{color:var(--info)}
+:focus-visible{outline:2px solid var(--sig);outline-offset:2px}
+.app{display:grid;grid-template-columns:276px minmax(0,1fr);min-height:100%}
+/* barra lateral */
+.side{position:sticky;top:0;height:100vh;overflow:auto;background:var(--panel);border-right:1px solid var(--line);padding:18px 14px 28px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 16px;border-bottom:1px solid var(--line);margin-bottom:10px;text-decoration:none;color:var(--ink)}
+.brand b{font:700 28px/1 var(--fd);letter-spacing:.04em}
+.brand span{font:500 11px/1.3 var(--fm);color:var(--ink3);text-transform:uppercase}
+.brand .flag{width:30px;height:30px;border:1px solid var(--line2);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;flex:none}
+.brand .flag i:nth-child(1){background:var(--sig)}.brand .flag i:nth-child(2){background:#1b4fa0}.brand .flag i:nth-child(3){background:#1b4fa0}.brand .flag i:nth-child(4){background:var(--sig)}
+.grp{margin:14px 0 4px;padding:0 8px;font:600 11px/1.3 var(--fm);text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+.nav a{display:flex;gap:10px;align-items:baseline;padding:6px 8px;border-radius:6px;color:var(--ink2);text-decoration:none;font-size:14px;line-height:1.35;border-left:3px solid transparent}
+.nav a b{font:600 13px var(--fm);color:var(--ink3);min-width:22px;text-align:right}
+.nav a:hover{background:var(--panel2);color:var(--ink)}
+.nav a[aria-current=page]{background:var(--panel2);color:var(--ink);border-left-color:var(--sig)}
+.nav a[aria-current=page] b{color:var(--sig)}
+.top{display:none}
+/* área principal */
+main{padding:28px clamp(16px,3vw,44px) 56px;min-width:0;max-width:1400px;width:100%}
+.rhead{display:flex;gap:22px;align-items:flex-start;margin-bottom:22px}
+.rnum{font:700 clamp(64px,9vw,112px)/.82 var(--fd);color:transparent;-webkit-text-stroke:2px var(--sig);min-width:1.1ch;letter-spacing:-.02em}
+.eyebrow{font:600 12px/1.3 var(--fm);text-transform:uppercase;letter-spacing:.07em;color:var(--sig);margin-bottom:6px}
+.rhead h1{font-size:clamp(34px,4.6vw,56px);line-height:1}
+.lead{color:var(--ink2);max-width:70ch;margin-top:10px;font-size:17px}
+.work{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:22px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card+.card{margin-top:14px}
+.card h3{font:600 12px/1.2 var(--fm);text-transform:uppercase;letter-spacing:.08em;color:var(--sig);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card h3::before{content:"";width:14px;height:2px;background:var(--sig)}
+.card ul{margin:0;padding-left:18px;color:var(--ink2);font-size:15px}
+.card li+li{margin-top:6px}
+.card p{color:var(--ink2);font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.chip{display:inline-block;padding:3px 10px;border:1px solid var(--line2);border-radius:99px;font:500 13px var(--fm);color:var(--ink2);text-decoration:none;background:transparent;cursor:pointer}
+.chip:hover{border-color:var(--sig);color:var(--sig)}
+/* escenario */
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ctrls{display:flex;flex-wrap:wrap;gap:12px 22px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.ctrls:empty{display:none}
+.ctl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cl{font:600 11px/1.2 var(--fm);text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line2);border-radius:7px;overflow:hidden;background:var(--bg)}
+.seg button{background:transparent;border:0;padding:6px 11px;font-size:13px;color:var(--ink2);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--sig);color:#1a1400;font-weight:600}
+.rg{display:flex;align-items:center;gap:10px}
+.rg input{width:170px;accent-color:var(--sig)}
+.rg output{font:500 13px var(--fm);color:var(--sig);min-width:5.5ch}
+.ctl select{background:var(--bg);border:1px solid var(--line2);border-radius:7px;padding:6px 8px;font-size:13px;max-width:240px}
+.ck{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);cursor:pointer}
+.ck input{accent-color:var(--sig);width:16px;height:16px}
+.cvw{position:relative;width:100%;aspect-ratio:16/10;background:#0e3d5e}
+.cvw.sq{aspect-ratio:1/1;max-width:600px;margin:0 auto}
+.cvw canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:10px 14px;border-top:1px solid var(--line);background:var(--panel2)}
+.btn{background:var(--bg);border:1px solid var(--line2);border-radius:7px;padding:6px 14px;font-size:14px;cursor:pointer;color:var(--ink);display:inline-flex;gap:6px;align-items:center}
+.btn:hover{border-color:var(--sig)}
+.btn.pri{background:var(--sig);border-color:var(--sig);color:#1a1400;font-weight:600}
+.bar input[type=range]{flex:1;min-width:120px;accent-color:var(--sig)}
+.bar .tm{font:500 13px var(--fm);color:var(--ink2);min-width:8ch}
+.bar select{background:var(--bg);border:1px solid var(--line2);border-radius:7px;padding:5px 8px;font-size:13px}
+.hud{padding:12px 16px 14px;border-top:1px solid var(--line)}
+.hud dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 18px;margin:0 0 10px}
+.hud dt{font:600 10.5px/1.2 var(--fm);text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+.hud dd{margin:2px 0 0;font:500 14px var(--fm);color:var(--ink);font-variant-numeric:tabular-nums}
+.msg{padding:9px 12px;border-radius:7px;font-size:15px;border-left:4px solid var(--info);background:rgba(111,183,255,.1);color:var(--ink)}
+.msg.ok{border-color:var(--stbd);background:rgba(39,224,140,.1)}
+.msg.warn{border-color:var(--warn);background:rgba(255,159,67,.12)}
+.msg.bad{border-color:var(--port);background:rgba(255,85,102,.12)}
+.extra{padding:0 16px 16px}
+.extra:empty{display:none}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:30px;padding-top:18px;border-top:1px solid var(--line)}
+.pager a{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--ink);padding:10px 14px;border:1px solid var(--line);border-radius:8px;min-width:0;max-width:48%}
+.pager a:hover{border-color:var(--sig)}
+.pager small{font:600 11px var(--fm);color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.pager a:last-child{text-align:right;margin-left:auto}
+/* inicio */
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:center;margin-bottom:26px}
+.hero h1{font-size:clamp(40px,6.2vw,84px);line-height:.94}
+.hero h1 em{font-style:normal;color:var(--sig)}
+.hero .cvw{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.parts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}
+.part{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--panel);display:flex;flex-direction:column;gap:6px}
+.part.on{border-color:var(--line2)}
+.part.off{opacity:.55}
+.part b{font:700 40px/1 var(--fd);color:var(--sig)}
+.part.off b{color:var(--ink3)}
+.part span{font:600 11px var(--fm);text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.rg1{display:flex;gap:8px;align-items:baseline;padding:9px 11px;border:1px solid var(--line);border-radius:8px;text-decoration:none;color:var(--ink);background:var(--panel);font-size:14px;line-height:1.25}
+.rg1 b{font:700 22px/1 var(--fd);color:var(--sig);min-width:1.6ch}
+.rg1:hover{border-color:var(--sig)}
+.sec-h{font:700 26px var(--fd);margin:26px 0 10px}
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.case{display:block;border:1px solid var(--line);border-radius:10px;padding:13px 14px;text-decoration:none;color:var(--ink);background:var(--panel)}
+.case:hover{border-color:var(--sig)}
+.case small{font:600 11px var(--fm);color:var(--sig);text-transform:uppercase;letter-spacing:.06em}
+.case h4{margin:4px 0 4px;font:700 20px var(--fd)}
+.case p{font-size:14px;color:var(--ink2)}
+/* piezas específicas */
+.band{display:grid;grid-template-columns:1fr;gap:10px;padding:14px}
+.sect{border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:var(--bg);display:flex;gap:14px;align-items:center;transition:background .25s,border-color .25s,opacity .25s;opacity:.45}
+.sect.on{opacity:1;border-color:var(--stbd);background:rgba(39,224,140,.09)}
+.sect b{font:700 30px/1 var(--fd);min-width:5.2ch;white-space:nowrap;color:var(--sig)}
+.sect span{font-size:14px;color:var(--ink2)}
+.zones{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;border-top:1px solid var(--line)}
+.zones .chip[aria-pressed=true]{background:var(--sig);color:#1a1400;border-color:var(--sig)}
+.svgw{background:#0e3d5e;line-height:0}
+.svgw svg{width:100%;height:auto;display:block}
+.qa{padding:16px}
+.qa .q{font:700 22px/1.2 var(--fd);margin-bottom:12px}
+.qa .yn{display:flex;gap:10px;flex-wrap:wrap}
+.qa .res{padding:14px;border:1px solid var(--stbd);border-radius:9px;background:rgba(39,224,140,.09)}
+.qa .res b{font:700 26px var(--fd);display:block;margin-bottom:4px}
+.trail{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.trail .chip{cursor:default}
+.defs{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:14px}
+.df{display:flex;gap:12px;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel)}
+.df canvas{width:70px;height:56px;flex:none;background:#0e3d5e;border-radius:6px}
+.df h4{font:700 19px/1.1 var(--fd);margin-bottom:3px}
+.df p{font-size:13.5px;color:var(--ink2);line-height:1.4}
+.cmp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.cmp div{border:1px solid var(--line);border-top:3px solid var(--sig);border-radius:8px;padding:12px;background:var(--panel)}
+.cmp b{font:700 18px var(--fd);display:block;margin-bottom:4px;color:var(--sig)}
+.cmp p{font-size:13.5px;color:var(--ink2)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:6px 6px;text-align:center}
+.tbl th{background:var(--panel2);font:600 11px var(--fm);color:var(--ink2)}
+.tbl th.rh{text-align:left;min-width:120px}
+.tbl td{cursor:pointer;color:var(--ink3)}
+.tbl td.y{color:var(--stbd);font-weight:700;background:rgba(39,224,140,.07)}
+.tbl td.sel{outline:2px solid var(--sig);outline-offset:-2px}
+.tbl td:hover{background:var(--panel2)}
+.tblw{overflow-x:auto;padding:12px 14px}
+.steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.step{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:8px 8px 9px;cursor:pointer;text-align:left;transition:border-color .2s,background .2s}
+.step b{font:700 22px/1 var(--fd);color:var(--ink3);display:block}
+.step span{font-size:13px;color:var(--ink2)}
+.step.on{border-color:var(--sig);background:rgba(245,197,66,.1)}
+.step.on b{color:var(--sig)}
+.step.done b{color:var(--stbd)}
+.tl{display:flex;height:34px;border-radius:7px;overflow:hidden;border:1px solid var(--line2);font:600 11px var(--fm);margin:4px 0 0}
+.tl div{flex:1;display:grid;place-items:center;background:var(--bg);color:var(--ink3);transition:background .2s}
+.tl div.on{color:#10151c}
+.tl div:nth-child(1).on{background:var(--stbd)}.tl div:nth-child(2).on{background:var(--sig)}.tl div:nth-child(3).on{background:var(--port)}
+.errs{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.err{border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden}
+.err button{all:unset;display:flex;gap:14px;align-items:flex-start;padding:16px;cursor:pointer;width:100%;box-sizing:border-box}
+.err button:focus-visible{outline:2px solid var(--sig);outline-offset:-2px}
+.err .n{font:700 40px/.9 var(--fd);color:var(--port);min-width:1.1ch}
+.err h3{font:700 22px/1.15 var(--fd)}
+.err .ans{display:none;padding:0 16px 16px 16px;border-top:1px dashed var(--line);margin-top:0}
+.err.open .ans{display:block;padding-top:12px}
+.err.open .n{color:var(--stbd)}
+.ans p{font-size:15px;color:var(--ink2)}
+.ans .chips{margin-top:10px}
+.concl{counter-reset:c;display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.concl li{counter-increment:c;display:grid;grid-template-columns:54px 1fr;gap:14px;border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--panel)}
+.concl li::before{content:counter(c,decimal-leading-zero);font:700 40px/1 var(--fd);color:var(--sig)}
+.concl b{display:block;font:700 22px var(--fd);margin-bottom:2px}
+.concl p{color:var(--ink2);font-size:15px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink2);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.plot{width:100%;height:190px;display:block;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+@media (max-width:1080px){.work{grid-template-columns:minmax(0,1fr)}.hero{grid-template-columns:1fr}.parts{grid-template-columns:repeat(2,minmax(0,1fr))}.steps{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:30;transform:translateX(-102%);transition:transform .2s}
+  body.nav-open .side{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.55)}
+  .top{display:flex;position:sticky;top:0;z-index:20;align-items:center;gap:12px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .top b{font:700 22px var(--fd)}
+  .top .btn{padding:5px 11px}
+  .rhead{flex-direction:column;gap:6px}
+  .rg input{width:130px}
+}
+@media (max-width:520px){.parts{grid-template-columns:1fr}.steps{grid-template-columns:repeat(2,minmax(0,1fr))}.cmp{grid-template-columns:1fr}.errs{grid-template-columns:1fr}.pager a{max-width:100%}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side" aria-label="Índice de reglas">
+  <a class="brand" href="#inicio"><span class="flag" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span><b>RIPA</b><br><span>COLREG 1972 · reglas 1–19</span></span></a>
+  <nav class="nav" aria-label="Reglas"></nav>
+</aside>
+<div>
+  <div class="top"><button class="btn" id="menu" type="button" aria-label="Abrir índice">☰ Índice</button><b>Atlas del RIPA</b></div>
+  <main id="view" tabindex="-1"></main>
+</div>
+</div>
+<script>
+'use strict';
+/* ===== Utilidades geométricas (x este, y norte, rumbos 0=N horario, unidades en millas náuticas) ===== */
+const D2R = Math.PI / 180, rad = d => d * D2R;
+const w360 = a => ((a % 360) + 360) % 360;
+const w180 = a => { a = w360(a); return a > 180 ? a - 360 : a; };
+const dv = h => [Math.sin(rad(h)), Math.cos(rad(h))];
+const brgOf = (a, b) => w360(Math.atan2(b.x - a.x, b.y - a.y) / D2R);
+const dst = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const vel = v => { const d = dv(v.h); return [d[0] * v.s / 60, d[1] * v.s / 60]; };
+const place = (M, h, s, T) => { const d = s * T / 60, u = dv(h); return { x: M.x - u[0] * d, y: M.y - u[1] * d }; };
+
+/* Datos del par A-B: distancia, marcación, marcación relativa, CPA y TCPA */
+function pair(a, b) {
+  const rx = b.x - a.x, ry = b.y - a.y, A = vel(a), B = vel(b);
+  const vx = B[0] - A[0], vy = B[1] - A[1], v2 = vx * vx + vy * vy;
+  let tc = v2 > 1e-9 ? -(rx * vx + ry * vy) / v2 : 0; if (tc < 0) tc = 0;
+  const cx = rx + vx * tc, cy = ry + vy * tc;
+  const brg = w360(Math.atan2(rx, ry) / D2R);
+  return { r: Math.hypot(rx, ry), brg, rel: w180(brg - a.h), cpa: Math.hypot(cx, cy), tcpa: tc };
+}
+/* Rumbo para que un buque de velocidad s desde p intercepte a un blanco (pos, vel nm/min) */
+function interceptH(p, s, q, qv) {
+  const rx = q.x - p.x, ry = q.y - p.y, k = s / 60;
+  const a = qv[0] * qv[0] + qv[1] * qv[1] - k * k, b = 2 * (rx * qv[0] + ry * qv[1]), c = rx * rx + ry * ry;
+  let t = null;
+  if (Math.abs(a) < 1e-9) { if (Math.abs(b) > 1e-9) t = -c / b; }
+  else { const d = b * b - 4 * a * c; if (d >= 0) { const t1 = (-b - Math.sqrt(d)) / (2 * a), t2 = (-b + Math.sqrt(d)) / (2 * a); t = Math.min(...[t1, t2].filter(x => x > 0)); if (!isFinite(t)) t = null; } }
+  if (t == null || t <= 0) return brgOf(p, q);
+  return w360(Math.atan2(rx + qv[0] * t, ry + qv[1] * t) / D2R);
+}
+function V(o) {
+  const v = Object.assign({ type: 'MEC', name: '', x: 0, y: 0, h: 0, s: 10, rate: 30, size: 1, orders: [], tag: null, tagCol: null, trail: [], col: null, boom: 0, path: null, pi: 0, q: null, lights: true }, o);
+  v.th = v.h; v.ts = v.s; return v;
+}
+
+/* ===== Dibujo de buques (vista cenital, proa hacia arriba) ===== */
+function lightDot(ctx, x, y, c, r) { ctx.save(); ctx.shadowColor = c; ctx.shadowBlur = r * 5; ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.restore(); }
+function drawShip(ctx, type, u, o) {
+  o = o || {}; const k = (o.size || 1) * ({ VEL: 0.72, PES: 0.86, NUC: 0.9, RAM: 0.95, CBD: 1.05 }[type] || 1);
+  const L = 44 * u * k, B = (type === 'VEL' ? 9 : 14) * u * (o.size || 1);
+  const night = !!o.night, col = o.col || '#cfd9e4';
+  ctx.save();
+  /* aparejos de pesca (red arrastrada) */
+  if (type === 'PES' && !night) { ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1 * u; ctx.setLineDash([3 * u, 3 * u]); ctx.beginPath(); ctx.moveTo(-B / 2, L / 2); ctx.lineTo(-B * 1.6, L * 1.35); ctx.moveTo(B / 2, L / 2); ctx.lineTo(B * 1.6, L * 1.35); ctx.stroke(); ctx.setLineDash([]); }
+  if (type === 'RAM' && !night) { ctx.strokeStyle = 'rgba(255,200,80,.5)'; ctx.lineWidth = 2 * u; ctx.beginPath(); ctx.moveTo(0, -L / 2); ctx.lineTo(0, -L * 0.95); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(0, -L / 2); ctx.lineTo(B / 2, -L * 0.22); ctx.lineTo(B / 2, L / 2); ctx.lineTo(-B / 2, L / 2); ctx.lineTo(-B / 2, -L * 0.22); ctx.closePath();
+  ctx.fillStyle = night ? '#16293d' : col; ctx.fill(); ctx.lineWidth = 1.2 * u; ctx.strokeStyle = night ? '#35597d' : '#071320'; ctx.stroke();
+  if (!night) {
+    if (type === 'MEC' || type === 'CBD' || type === 'PES') { ctx.fillStyle = '#f4f7fb'; ctx.fillRect(-B * 0.32, L * 0.1, B * 0.64, L * 0.26); ctx.fillStyle = '#ff7a59'; ctx.fillRect(-B * 0.16, L * 0.18, B * 0.32, L * 0.1); }
+    if (type === 'VEL') { /* vela mayor */
+      const bm = o.boom || 0, sd = bm >= 0 ? 1 : -1, ang = Math.abs(bm) * D2R, ml = L * 0.62;
+      const mx = 0, my = -L * 0.08, ex = mx + sd * Math.sin(ang) * ml, ey = my + Math.cos(ang) * ml;
+      ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.beginPath(); ctx.moveTo(mx, my); ctx.quadraticCurveTo(sd * Math.sin(ang) * ml * 0.35 + sd * 3 * u, my + ml * 0.4, ex, ey); ctx.lineTo(mx, my + 1 * u); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#071320'; ctx.lineWidth = 1 * u; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(ex, ey); ctx.stroke();
+    }
+    ctx.fillStyle = '#05080c'; ctx.strokeStyle = '#05080c';
+    const ball = (y) => { ctx.beginPath(); ctx.arc(0, y, 2.5 * u, 0, 7); ctx.fill(); };
+    if (type === 'NUC') { ball(-L * 0.14); ball(L * 0.1); }
+    if (type === 'RAM') { ball(-L * 0.2); ctx.beginPath(); ctx.moveTo(0, -L * 0.08); ctx.lineTo(3 * u, L * 0.02); ctx.lineTo(0, L * 0.12); ctx.lineTo(-3 * u, L * 0.02); ctx.closePath(); ctx.fill(); ball(L * 0.22); }
+    if (type === 'PES') { ctx.beginPath(); ctx.moveTo(-3 * u, -L * 0.2); ctx.lineTo(3 * u, -L * 0.2); ctx.lineTo(0, -L * 0.1); ctx.closePath(); ctx.moveTo(-3 * u, 0); ctx.lineTo(3 * u, 0); ctx.lineTo(0, -L * 0.1); ctx.closePath(); ctx.fill(); }
+    if (type === 'CBD') { ctx.fillRect(-2 * u, -L * 0.2, 4 * u, 7 * u); }
+  } else if (o.lights !== false) {
+    const r = 1.9 * u, W = '#f4f7ff', R = '#ff3b4d', G = '#27e08c', side = () => { lightDot(ctx, -B / 2, -L * 0.18, R, r); lightDot(ctx, B / 2, -L * 0.18, G, r); };
+    if (type === 'MEC') { lightDot(ctx, 0, -L * 0.22, W, r); lightDot(ctx, 0, L * 0.06, W, r); side(); lightDot(ctx, 0, L / 2, W, r); }
+    if (type === 'VEL') { side(); lightDot(ctx, 0, L / 2, W, r); }
+    if (type === 'PES') { lightDot(ctx, 0, -L * 0.2, G, r); lightDot(ctx, 0, -L * 0.1, W, r); side(); lightDot(ctx, 0, L / 2, W, r); }
+    if (type === 'NUC') { lightDot(ctx, 0, -L * 0.15, R, r); lightDot(ctx, 0, L * 0.02, R, r); }
+    if (type === 'RAM') { lightDot(ctx, 0, -L * 0.2, R, r); lightDot(ctx, 0, -L * 0.06, W, r); lightDot(ctx, 0, L * 0.08, R, r); }
+    if (type === 'CBD') { lightDot(ctx, 0, -L * 0.2, R, r); lightDot(ctx, 0, -L * 0.08, R, r); lightDot(ctx, 0, L * 0.04, R, r); lightDot(ctx, 0, -L * 0.3, W, r); side(); }
+  }
+  ctx.restore();
+}
+
+/* ===== Simulador ===== */
+class Sim {
+  constructor(cv, build, P) { this.cv = cv; this.ctx = cv.getContext('2d'); this.build = build; this.P = P; this.night = false; this.rate = 1.2; this.playing = false; this.reset(); }
+  reset() { this.sc = this.build(this.P); this.vs = this.sc.vessels; this.t = 0; this.minR = Infinity; this.hit = false; this.tr = 0; this.ev = {}; }
+  get ended() { return this.hit || this.t >= this.sc.tmax - 0.06; }
+  step(dt) {
+    const t = this.t;
+    for (const v of this.vs) {
+      for (const o of v.orders) {
+        if (o.done) continue;
+        if ((o.at != null && t >= o.at) || (o.when && o.when(this, v))) {
+          o.done = true;
+          if (o.dh != null) v.th = w360(v.h + o.dh);
+          if (o.h != null) v.th = w360(o.h);
+          if (o.s != null) v.ts = o.s;
+          if (o.fn) o.fn(this, v);
+        }
+      }
+      if (v.path) { const wp = v.path[v.pi]; if (wp) { v.th = brgOf(v, wp); if (dst(v, wp) < 0.12) v.pi++; } }
+      const dh = w180(v.th - v.h), m = v.rate * dt; v.h = w360(v.h + Math.max(-m, Math.min(m, dh)));
+      const ds = v.ts - v.s, ma = 10 * dt; v.s += Math.max(-ma, Math.min(ma, ds));
+      const d = dv(v.h); v.x += d[0] * v.s / 60 * dt; v.y += d[1] * v.s / 60 * dt;
+    }
+    this.t += dt; this.tr += dt;
+    if (this.tr >= 0.25) { this.tr = 0; for (const v of this.vs) { v.trail.push([v.x, v.y]); if (v.trail.length > 140) v.trail.shift(); } }
+    if (this.vs.length > 1) { const r = dst(this.vs[0], this.vs[1]); if (r < this.minR) this.minR = r; if (r < 0.06 && !this.sc.noHit) this.hit = true; }
+  }
+  seek(t) { this.reset(); while (this.t < t - 1e-9 && !this.hit) this.step(0.05); }
+  advance(dtReal) {
+    if (!this.playing) return;
+    if (this.ended) { this.holdT = (this.holdT || 0) + dtReal; if (this.loop && this.holdT > 1.8) { this.holdT = 0; this.reset(); } return; }
+    let sd = Math.min(dtReal, 0.1) * this.rate * (this.mult || 1);
+    while (sd > 1e-9 && !this.ended) { const d = Math.min(0.05, sd); this.step(d); sd -= d; }
+  }
+  /* proyección */
+  X(x) { return (x - this.cx) * this.ppn + this.W / 2; }
+  Y(y) { return this.H / 2 - (y - this.cy) * this.ppn; }
+  N(nm) { return nm * this.ppn; }
+  draw() {
+    const { ctx, cv } = this, sc = this.sc; this.W = cv.width; this.H = cv.height;
+    this.u = this.W / 560; this.ppn = this.W / (sc.span || 9); this.cx = sc.cx || 0; this.cy = sc.cy || 0;
+    const W = this.W, H = this.H, u = this.u, night = this.night;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, night ? '#050c16' : '#14537a'); g.addColorStop(1, night ? '#08131f' : '#0e3d5e');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    /* retícula de millas */
+    ctx.strokeStyle = night ? 'rgba(120,170,220,.07)' : 'rgba(255,255,255,.07)'; ctx.lineWidth = 1;
+    const x0 = Math.floor(this.cx - (sc.span || 9) / 2), x1 = Math.ceil(this.cx + (sc.span || 9) / 2), y0 = Math.floor(this.cy - H / this.ppn / 2), y1 = Math.ceil(this.cy + H / this.ppn / 2);
+    ctx.beginPath(); for (let x = x0; x <= x1; x++) { ctx.moveTo(this.X(x), 0); ctx.lineTo(this.X(x), H); } for (let y = y0; y <= y1; y++) { ctx.moveTo(0, this.Y(y)); ctx.lineTo(W, this.Y(y)); } ctx.stroke();
+    if (sc.under) sc.under(this, ctx);
+    /* estelas */
+    for (const v of this.vs) { if (v.trail.length < 2) continue; ctx.strokeStyle = night ? 'rgba(160,200,240,.22)' : 'rgba(255,255,255,.28)'; ctx.lineWidth = 2 * u; ctx.beginPath(); v.trail.forEach((p, i) => i ? ctx.lineTo(this.X(p[0]), this.Y(p[1])) : ctx.moveTo(this.X(p[0]), this.Y(p[1]))); ctx.lineTo(this.X(v.x), this.Y(v.y)); ctx.stroke(); }
+    /* sectores de luces */
+    if (night && sc.sectors) for (const i of sc.sectors) { const v = this.vs[i]; if (!v || v.type === 'NUC' || v.type === 'RAM') continue; const r = this.N(sc.sectR || 1.1), x = this.X(v.x), y = this.Y(v.y);
+      const wedge = (a, b, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r, rad(v.h + a) - Math.PI / 2, rad(v.h + b) - Math.PI / 2); ctx.closePath(); ctx.fill(); };
+      wedge(-112.5, 0, 'rgba(255,59,77,.17)'); wedge(0, 112.5, 'rgba(39,224,140,.17)'); if (v.type === 'MEC' || v.type === 'VEL') wedge(112.5 + 0, 247.5, 'rgba(240,244,255,.13)'); }
+    if (sc.mid) sc.mid(this, ctx);
+    /* buques */
+    for (const v of this.vs) {
+      const x = this.X(v.x), y = this.Y(v.y); ctx.save(); ctx.translate(x, y); ctx.rotate(rad(v.h));
+      if (v.hidden) ctx.globalAlpha = v.hidden; drawShip(ctx, v.type, u, { size: v.size, night, col: v.col, boom: v.boom, lights: v.lights }); ctx.restore();
+    }
+    if (sc.over) sc.over(this, ctx);
+    /* etiquetas */
+    ctx.textBaseline = 'middle';
+    for (const v of this.vs) {
+      if (v.hidden && v.hidden < 0.5) continue;
+      const x = this.X(v.x), y = this.Y(v.y);
+      if (v.name) { ctx.font = `700 ${13 * u}px "IBM Plex Mono",monospace`; ctx.fillStyle = night ? '#9fc1e6' : '#fff'; ctx.textAlign = 'center'; ctx.fillText(v.name, x - 22 * u, y - 16 * u); }
+      const tg = typeof v.tag === 'function' ? v.tag(this, v) : v.tag;
+      if (tg) {
+        ctx.font = `600 ${11.5 * u}px "IBM Plex Sans",sans-serif`; const w = ctx.measureText(tg).width + 14 * u, h = 20 * u; let bx = x + 20 * u, by = y - 28 * u; if (v.tagSide === 'l') bx = x - 20 * u - w; if (bx + w > W - 8 * u) bx = x - 20 * u - w; if (bx < 6 * u) bx = 6 * u; if (by - h / 2 < 4 * u) by = y + 30 * u; ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(6,16,28,.82)'; ctx.strokeStyle = v.tagCol || '#f5c542'; ctx.lineWidth = 1.2 * u; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, by - h / 2, w, h, 4 * u) : ctx.rect(bx, by - h / 2, w, h); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = v.tagCol || '#f5c542'; ctx.fillText(tg, bx + 7 * u, by + 0.5 * u);
+      }
+    }
+    /* escala y norte */
+    ctx.font = `600 ${11 * u}px "IBM Plex Mono",monospace`; ctx.fillStyle = night ? 'rgba(160,200,240,.7)' : 'rgba(255,255,255,.8)'; ctx.textAlign = 'left';
+    const sx = 16 * u, sy = H - 18 * u; ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 2 * u; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + this.N(1), sy); ctx.moveTo(sx, sy - 4 * u); ctx.lineTo(sx, sy + 4 * u); ctx.moveTo(sx + this.N(1), sy - 4 * u); ctx.lineTo(sx + this.N(1), sy + 4 * u); ctx.stroke(); ctx.fillText('1 milla náutica', sx + this.N(1) + 8 * u, sy);
+    ctx.textAlign = 'center'; ctx.fillText('N', W - 26 * u, 22 * u); ctx.beginPath(); ctx.moveTo(W - 26 * u, 32 * u); ctx.lineTo(W - 26 * u, 52 * u); ctx.moveTo(W - 26 * u, 32 * u); ctx.lineTo(W - 31 * u, 40 * u); ctx.moveTo(W - 26 * u, 32 * u); ctx.lineTo(W - 21 * u, 40 * u); ctx.stroke();
+    if (sc.banner) { const b = typeof sc.banner === 'function' ? sc.banner(this) : sc.banner; if (b) { ctx.font = `700 ${14 * u}px "Barlow Condensed",sans-serif`; ctx.textAlign = 'left'; const w = ctx.measureText(b.text).width + 22 * u; ctx.fillStyle = 'rgba(6,16,28,.86)'; ctx.fillRect(14 * u, 14 * u, w, 28 * u); ctx.fillStyle = b.col || '#f5c542'; ctx.fillRect(14 * u, 14 * u, 4 * u, 28 * u); ctx.fillText(b.text, 26 * u, 29 * u); } }
+    if (this.hit) { const a = this.vs[0], b = this.vs[1], x = this.X((a.x + b.x) / 2), y = this.Y((a.y + b.y) / 2); ctx.strokeStyle = '#ff4d5e'; ctx.lineWidth = 3 * u; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(x, y, (16 + i * 10) * u, 0, 7); ctx.globalAlpha = 1 - i * 0.3; ctx.stroke(); } ctx.globalAlpha = 1; ctx.fillStyle = '#ff4d5e'; ctx.font = `700 ${22 * u}px "Barlow Condensed",sans-serif`; ctx.textAlign = 'center'; ctx.fillText('ABORDAJE', x, y - 46 * u); }
+  }
+}
+
+/* ===== Piezas reutilizables de escenas ===== */
+const KIND = { ok: 'ok', warn: 'warn', bad: 'bad', info: 'info' };
+function pairHud(sim, extra, okMsg) {
+  const a = sim.vs[0], b = sim.vs[1], p = pair(a, b), rows = [
+    ['Distancia A–B', p.r.toFixed(2) + ' mn'], ['Marcación de B (relativa a A)', (p.rel >= 0 ? p.rel.toFixed(0) + '° estribor' : (-p.rel).toFixed(0) + '° babor')],
+    ['CPA / TCPA', sim.t < 0.01 || p.tcpa > 0 ? p.cpa.toFixed(2) + ' mn / ' + p.tcpa.toFixed(1) + ' min' : p.cpa.toFixed(2) + ' mn / —'], ['Menor distancia alcanzada', isFinite(sim.minR) ? sim.minR.toFixed(2) + ' mn' : '—']];
+  if (extra) rows.push(...extra);
+  let msg = 'Simulación en curso…', k = 'info';
+  if (sim.ended) { const m = sim.minR; if (sim.hit) { msg = 'Abordaje: la situación no se resolvió a tiempo.'; k = 'bad'; } else if (m < (sim.sc.badR || 0.35)) { msg = 'Paso peligroso (' + m.toFixed(2) + ' mn): no hay franquía suficiente.'; k = 'bad'; } else if (m < (sim.sc.okR || 0.8)) { msg = 'Paso ajustado (' + m.toFixed(2) + ' mn): maniobra poco holgada.'; k = 'warn'; } else { msg = (okMsg || 'Paso seguro') + ' (' + m.toFixed(2) + ' mn de franquía).'; k = 'ok'; } }
+  return { rows, msg, k };
+}
+function dashLine(ctx, x1, y1, x2, y2, col, w, d) { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(d || [6, 5]); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore(); }
+function ring(sim, ctx, v, nm, col, label, dash) { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.5 * sim.u; ctx.setLineDash(dash || [7, 6]); ctx.beginPath(); ctx.arc(sim.X(v.x), sim.Y(v.y), sim.N(nm), 0, 7); ctx.stroke(); ctx.setLineDash([]); if (label) { ctx.fillStyle = col; ctx.font = `600 ${11 * sim.u}px "IBM Plex Mono",monospace`; ctx.textAlign = 'center'; ctx.fillText(label, sim.X(v.x), sim.Y(v.y) - sim.N(nm) - 8 * sim.u); } ctx.restore(); }
+function lineAB(sim, ctx) { const a = sim.vs[0], b = sim.vs[1]; dashLine(ctx, sim.X(a.x), sim.Y(a.y), sim.X(b.x), sim.Y(b.y), 'rgba(255,255,255,.35)', 1.2 * sim.u, [4, 5]); }
+function lightSeen(from, to) { /* luz del buque 'from' observada desde 'to' */
+  const r = w180(brgOf(from, to) - from.h), a = Math.abs(r);
+  if (from.type === 'NUC' || from.type === 'RAM') return ['luces todo horizonte', '#ff7a8a'];
+  if (a <= 112.5) return r > 0 ? ['verde (costado de estribor)', '#27e08c'] : ['roja (costado de babor)', '#ff5566'];
+  return ['blanca de alcance (popa)', '#f4f7ff'];
+}
+
+/* ---- Cruce de rumbos: reglas 8, 15 y 16 ---- */
+function crossingScene(P) {
+  const M = { x: 0, y: 0.2 }, T = 12, sb = P.who !== 'babor';
+  const A = V({ name: 'A', h: 0, s: 12, col: '#6fb7ff' }); Object.assign(A, place(M, 0, 12, T));
+  const hb = sb ? 270 : 90, B = V({ name: 'B', h: hb, s: 12, col: '#ffd166' }); Object.assign(B, place(M, hb, 12, T));
+  const G = sb ? A : B, S = sb ? B : A, act = P.act || 'popa', dist = P.dist == null ? 2.2 : P.dist, turn = P.turn == null ? 60 : P.turn;
+  const sgn = act === 'proa' ? -1 : 1, trig = act === 'tardia' ? 0.55 : dist;
+  if (act === 'ambigua') { let t0 = null; for (let i = 0; i < 6; i++) G.orders.push({ dh: sgn * turn / 6, when: s => { if (pair(A, B).r <= dist) { if (t0 === null) t0 = s.t; return s.t >= t0 + i * 0.75; } return false; } }); }
+  else if (act !== 'ninguna') { G.orders.push({ dh: sgn * turn, when: () => pair(A, B).r <= trig }); if (P.slow) G.orders.push({ s: 5, when: () => pair(A, B).r <= trig }); }
+  if (!P.noTag) { G.tag = s => (act === 'ninguna' ? 'DEBE CEDER EL PASO' : 'CEDE EL PASO'); G.tagCol = '#ff9f43'; S.tag = 'SIGUE A RUMBO'; S.tagCol = '#27e08c'; }
+  return {
+    vessels: [A, B], span: 9, cx: 0, cy: 0.25, tmax: 18, sectors: [0, 1], sectR: 1.2, G, S,
+    over: (sim, ctx) => lineAB(sim, ctx),
+    hud: sim => { const ls = lightSeen(B, A); return pairHud(sim, [['Luz de B vista desde A (de noche)', `<span style="color:${ls[1]}">${ls[0]}</span>`], ['Paso del buque que cede', act === 'proa' ? 'por la proa del otro (a evitar)' : act === 'ninguna' ? '—' : 'por la popa del otro']], act === 'proa' ? 'Paso franco, pero cortando la proa del otro buque: la regla lo desaconseja' : P.okMsg); }
+  };
+}
+/* ---- Buque que sigue a rumbo: reglas 2 y 17 ---- */
+function standOnScene(P) {
+  const M = { x: 0, y: 0.2 }, T = 12, A = V({ name: 'A', h: 0, s: 12, col: '#6fb7ff' }); Object.assign(A, place(M, 0, 12, T));
+  const B = V({ name: 'B', h: 90, s: 12, col: '#ffd166' }); Object.assign(B, place(M, 90, 12, T));
+  const mode = P.mode || 'mantener', R2 = 1.7, R3 = 1.1;
+  if (mode === 'e2') A.orders.push({ dh: 90, when: () => pair(A, B).r <= R2 });
+  if (mode === 'e3') A.orders.push({ dh: 90, when: () => pair(A, B).r <= R3 });
+  if (mode === 'r2') A.orders.push({ dh: 90, when: () => pair(A, B).r <= 1.3 });
+  if (mode === 'babor') A.orders.push({ dh: -35, when: () => pair(A, B).r <= 1.3 });
+  if (P.bAct === 'tarde') B.orders.push({ dh: 70, when: () => pair(A, B).r <= 0.6 });
+  A.tag = s => { const r = pair(A, B).r; return r > R2 ? 'ETAPA 1 · MANTIENE RUMBO' : r > R3 ? 'ETAPA 2 · PUEDE MANIOBRAR' : 'ETAPA 3 · DEBE ACTUAR'; };
+  if (P.rings === false) A.tag = () => (mode === 'r2' && pair(A, B).r <= 1.3) ? 'SE APARTA: PELIGRO INMEDIATO' : 'MANTIENE RUMBO Y VELOCIDAD';
+  A.tagCol = '#27e08c'; B.tag = P.bAct === 'tarde' ? 'CEDE TARDE' : 'NO CEDE EL PASO'; B.tagCol = '#ff6b6b';
+  return {
+    vessels: [A, B], span: 9, cx: 0, cy: 0.25, tmax: 18, sectors: [0, 1], sectR: 1.2, R2, R3,
+    mid: (sim, ctx) => { if (P.rings === false) return; ring(sim, ctx, A, R2, 'rgba(255,214,102,.8)', 'etapa 2 · 1,7 mn'); ring(sim, ctx, A, R3, 'rgba(255,107,107,.9)', 'etapa 3 · 1,1 mn'); },
+    over: (sim, ctx) => lineAB(sim, ctx),
+    hud: sim => pairHud(sim, null, 'El buque que sigue a rumbo actuó a tiempo')
+  };
+}
+/* ---- Vuelta encontrada: regla 14 ---- */
+function headOnScene(P) {
+  const A = V({ name: 'A', h: 90, s: 12, col: '#6fb7ff' }), hb = P.mode === 'duda' ? 262 : 270, B = V({ name: 'B', h: hb, s: 12, col: '#ffd166' });
+  Object.assign(A, place({ x: 0, y: 0 }, 90, 12, 12)); Object.assign(B, place({ x: 0, y: P.mode === 'duda' ? 0.05 : 0.1 }, hb, 12, 12));
+  const r0 = 1.9;
+  if (P.mode === 'babor') { A.orders.push({ dh: -35, when: () => pair(A, B).r <= r0 }); B.orders.push({ dh: 35, when: () => pair(A, B).r <= r0 }); }
+  else { A.orders.push({ dh: 35, when: () => pair(A, B).r <= r0 }); B.orders.push({ dh: 35, when: () => pair(A, B).r <= r0 }); }
+  A.tag = P.mode === 'babor' ? 'A CAE A BABOR' : 'A CAE A ESTRIBOR'; A.tagCol = P.mode === 'babor' ? '#ff6b6b' : '#27e08c'; B.tag = 'B CAE A ESTRIBOR'; B.tagCol = '#27e08c';
+  return {
+    vessels: [A, B], span: 9, cx: 0, cy: 0.1, tmax: 16, sectors: [0, 1], sectR: 1.3,
+    over: (sim, ctx) => lineAB(sim, ctx),
+    hud: sim => { const p = pair(A, B), ra = Math.abs(w180(brgOf(B, A) - B.h)), ob = Math.abs(p.rel), crit = ob <= 6 ? 'a proa' : ob <= 20 ? 'casi a proa' : 'fuera de proa';
+      return pairHud(sim, [['B visto desde A', crit + ' (' + ob.toFixed(0) + '° de la proa)'], ['Noche: luces de B', ob <= 20 && ra <= 20 ? 'tope en línea y ambos costados' : 'se ve un solo costado']], 'Ambos buques cayeron a estribor y pasaron babor con babor'); }
+  };
+}
+/* ---- Buque que alcanza: regla 13 ---- */
+function overtakeScene(P) {
+  const A = V({ name: 'A', x: 0, y: 0, h: 90, s: 6, col: '#6fb7ff' }), brg = P.brg || 165, st = P.q !== 'babor';
+  const ang = A.h + (st ? brg : -brg), d = dv(ang), B = V({ name: 'B', x: d[0] * 2.1, y: d[1] * 2.1, h: 90, s: 12, col: '#ffd166' });
+  B.h = B.th = interceptH(B, 12, A, vel(A));
+  const off = st ? 1 : -1; B.orders.push({ dh: 0, when: () => pair(B, A).r <= 1.5, fn: (s, v) => { v.th = w360(90 + off * 22); } }); B.orders.push({ dh: 0, when: () => B.x > A.x + 0.9, fn: (s, v) => { v.th = 90; } });
+  const over = brg > 112.5;
+  B.tag = over ? 'BUQUE QUE ALCANZA' : 'NO ES ALCANCE'; B.tagCol = over ? '#ff9f43' : '#9db3c9'; A.tag = over ? 'SIGUE A RUMBO' : 'REGLA 15 (CRUCE)'; A.tagCol = over ? '#27e08c' : '#ff9f43';
+  return {
+    vessels: [A, B], span: 9, cx: 0.4, cy: 0, tmax: 22, sectors: [0], sectR: 1.8,
+    mid: (sim, ctx) => { const x = sim.X(A.x), y = sim.Y(A.y), r = sim.N(2.4); ctx.fillStyle = 'rgba(245,197,66,.10)'; ctx.strokeStyle = 'rgba(245,197,66,.6)'; ctx.lineWidth = 1.2 * sim.u; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r, rad(A.h + 112.5) - Math.PI / 2, rad(A.h + 247.5) - Math.PI / 2); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(245,197,66,.9)'; ctx.font = `600 ${11 * sim.u}px "IBM Plex Mono",monospace`; ctx.textAlign = 'center'; const m = dv(A.h + 128); ctx.fillText('sector de alcance · 135°', x + m[0] * sim.N(2.0), y - m[1] * sim.N(2.0)); },
+    over: (sim, ctx) => { lineAB(sim, ctx); if (sim.night) { const bx = sim.X(B.x), by = sim.Y(B.y); ctx.fillStyle = '#f4f7ff'; ctx.font = `600 ${11 * sim.u}px "IBM Plex Sans"`; ctx.textAlign = 'left'; ctx.fillText('B solo ve la luz de alcance de A', bx + 14 * sim.u, by + 28 * sim.u); } },
+    hud: sim => { const p = pair(A, B), rb = Math.abs(w180(brgOf(A, B) - A.h)); return pairHud(sim, [['Marcación de B desde A (desde la proa)', rb.toFixed(0) + '°'], ['¿Más de 22,5° a popa del través?', rb > 112.5 ? 'Sí · es alcance (Regla 13)' : 'No · es cruce (Regla 15)']], 'B alcanzó y adelantó sin estorbar a A'); }
+  };
+}
+/* ---- Buques de vela: regla 12 ---- */
+function sailScene(P) {
+  const wind = 0, tack = (h) => w180(wind - h) > 0 ? 'estribor' : 'babor', boom = h => { const r = w180(wind - h); return -Math.sign(r) * Math.min(80, Math.max(14, Math.abs(r) * 0.55)); };
+  let M = { x: 0, y: 0.3 }, ha, hb, sA = 5, sB = 5, T = 22;
+  if (P.mode === 'misma') { ha = 300; hb = 330; } else { ha = 45; hb = 315; }
+  const A = V({ type: 'VEL', name: 'A', h: ha, s: sA, col: '#6fb7ff', rate: 24 }), B = V({ type: 'VEL', name: 'B', h: hb, s: sB, col: '#ffd166', rate: 24 });
+  Object.assign(A, place(M, ha, sA, T)); Object.assign(B, place(M, hb, sB, T));
+  A.boom = boom(ha); B.boom = boom(hb);
+  const dir = P.mode === 'misma' ? -95 : 75;
+  A.orders.push({ dh: dir, when: () => pair(A, B).r <= (P.mode === 'misma' ? 1.8 : 1.3) });
+  const ta = tack(ha), tb = tack(hb);
+  A.tag = P.mode === 'misma' ? 'BARLOVENTO · SE APARTA' : 'VIENTO POR BABOR · SE APARTA'; A.tagCol = '#ff9f43'; A.tagSide = 'l'; A.size = B.size = 1.35;
+  B.tag = P.mode === 'duda' ? '¿QUÉ BANDA? (NO SE PUEDE DETERMINAR)' : P.mode === 'misma' ? 'SOTAVENTO · SIGUE' : 'VIENTO POR ESTRIBOR · SIGUE'; B.tagCol = P.mode === 'duda' ? '#9db3c9' : '#27e08c';
+  return {
+    vessels: [A, B], span: 7, cx: 0, cy: 0.15, tmax: 30, okR: 0.3, badR: 0.15,
+    under: (sim, ctx) => { ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2 * sim.u; for (let i = -3; i <= 3; i += 2) { const x = sim.X(i + 0.0), y0 = sim.Y(2.4); ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0 + 36 * sim.u); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y0 + 40 * sim.u); ctx.lineTo(x - 5 * sim.u, y0 + 30 * sim.u); ctx.lineTo(x + 5 * sim.u, y0 + 30 * sim.u); ctx.closePath(); ctx.fill(); }
+      ctx.font = `600 ${11 * sim.u}px "IBM Plex Mono",monospace`; ctx.textAlign = 'left'; ctx.fillText('viento (N)', sim.X(-3.3), sim.Y(2.4) - 8 * sim.u); },
+    over: (sim, ctx) => lineAB(sim, ctx),
+    hud: sim => pairHud(sim, [['Banda de A (viento por…)', ta], ['Banda de B (viento por…)', P.mode === 'duda' ? 'indeterminada' : tb], ['Barlovento', P.mode === 'misma' ? 'A (más cerca de donde viene el viento)' : '—']], 'El buque que debía apartarse lo hizo con holgura')
+  };
+}
+/* ---- Visibilidad: regla 11 ---- */
+function fogScene(P) {
+  const vis = P.vis == null ? 2.5 : P.vis, A = V({ name: 'A', h: 90, s: 12, col: '#6fb7ff' }), B = V({ name: 'B', h: 270, s: 12, col: '#ffd166' });
+  Object.assign(A, place({ x: 0, y: 0 }, 90, 12, 12.5)); Object.assign(B, place({ x: 0, y: 0.45 }, 270, 12, 12.5));
+  const sight = () => pair(A, B).r <= vis;
+  B.tag = () => sight() ? 'A LA VISTA' : 'SOLO RADAR'; B.tagCol = '#f5c542';
+  return {
+    vessels: [A, B], span: 9, cx: 0, cy: 0.2, tmax: 15, noHit: true,
+    banner: sim => sight() ? { text: 'A LA VISTA · Sección II · reglas 12 a 18', col: '#27e08c' } : { text: 'NO A LA VISTA · Sección III · regla 19 (más reglas 4 a 10)', col: '#ff9f43' },
+    mid: (sim, ctx) => { const x = sim.X(A.x), y = sim.Y(A.y), r = sim.N(vis); const g = ctx.createRadialGradient(x, y, r * 0.92, x, y, r * 1.45); g.addColorStop(0, 'rgba(200,214,228,0)'); g.addColorStop(1, sim.night ? 'rgba(120,140,165,.55)' : 'rgba(210,222,235,.62)'); ctx.fillStyle = g; ctx.fillRect(0, 0, sim.W, sim.H); ring(sim, ctx, A, vis, 'rgba(245,197,66,.9)', 'alcance visual · ' + vis.toFixed(1) + ' mn', [2, 5]); },
+    hudx: null,
+    over: (sim, ctx) => { if (!sight()) { B.hidden = 0.18; ctx.strokeStyle = '#7cf0ff'; ctx.lineWidth = 2 * sim.u; const x = sim.X(B.x), y = sim.Y(B.y); ctx.strokeRect(x - 9 * sim.u, y - 9 * sim.u, 18 * sim.u, 18 * sim.u); ctx.fillStyle = '#7cf0ff'; ctx.font = `600 ${11 * sim.u}px "IBM Plex Mono"`; ctx.textAlign = 'left'; ctx.fillText('eco de radar', x + 14 * sim.u, y + 22 * sim.u); } else B.hidden = 0; lineAB(sim, ctx); },
+    hud: sim => { const p = pair(A, B), s = sight(); return { rows: [['Distancia A–B', p.r.toFixed(2) + ' mn'], ['Alcance visual', vis.toFixed(1) + ' mn'], ['¿Se ven mutuamente?', s ? 'Sí · observación visual directa' : 'No · solo detección por radar'], ['Reglas que gobiernan', s ? '4–10 y 11–18' : '4–10 y 19']], msg: s ? 'Los buques están a la vista: se aplican las reglas de encuentro de la Sección II.' : 'Aunque el radar detecta a B, no están a la vista: se aplica la regla 19.', k: s ? 'ok' : 'warn' }; }
+  };
+}
+/* ---- Canal angosto: regla 9 ---- */
+function channelScene(P) {
+  const mode = P.mode || 'estribor', land = '#3b4a3a', W = 0.95;
+  let A, B, C, cl, cx = 0, cy = 0, span = 9, tmax = 22, vs, hud, tags = {};
+  const under = (poly, extra) => (sim, ctx) => { ctx.fillStyle = sim.night ? '#17241a' : land; ctx.fillRect(0, 0, sim.W, sim.H); ctx.strokeStyle = sim.night ? '#08131f' : '#14537a'; ctx.lineWidth = sim.N(W); ctx.lineJoin = 'round'; ctx.lineCap = 'butt'; ctx.beginPath(); poly.forEach((p, i) => i ? ctx.lineTo(sim.X(p[0]), sim.Y(p[1])) : ctx.moveTo(sim.X(p[0]), sim.Y(p[1]))); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1.5 * sim.u; ctx.setLineDash([10, 10]); ctx.lineWidth = sim.u; ctx.beginPath(); poly.forEach((p, i) => i ? ctx.lineTo(sim.X(p[0]), sim.Y(p[1])) : ctx.moveTo(sim.X(p[0]), sim.Y(p[1]))); ctx.stroke(); ctx.setLineDash([]); if (extra) extra(sim, ctx); };
+  const lab = (sim, ctx, t, x, y, c) => { ctx.font = `600 ${11 * sim.u}px "IBM Plex Mono",monospace`; ctx.fillStyle = c || 'rgba(255,255,255,.7)'; ctx.textAlign = 'center'; ctx.fillText(t, sim.X(x), sim.Y(y)); };
+  if (mode === 'recodo') {
+    const poly = [[-4.5, 0], [1.4, 0], [1.4, 3.6]];
+    A = V({ name: 'A', x: -3.0, y: -0.22, h: 90, s: 11, col: '#6fb7ff', path: [{x:1.62,y:-0.22},{x:1.62,y:4}], rate: 40 }); B = V({ name: 'B', x: 1.18, y: 3.3, h: 180, s: 9, col: '#ffd166', path: [{x:1.18,y:0.22},{x:-4.8,y:0.22}], rate: 40 });
+    A.orders.push({ s: 6, when: s => A.x > -0.9, fn: s => { s.ev.sa = s.t; } }); B.orders.push({ s: 6, when: s => s.ev.sa != null && s.t > s.ev.sa + 0.6, fn: s => { s.ev.sb = s.t; } });
+    A.tag = () => A.x > -0.9 ? 'EMITE UNA PITADA LARGA' : 'SE APROXIMA AL RECODO'; A.tagCol = '#f5c542'; B.tag = () => B.s < 8 ? 'RESPONDE CON UNA PITADA LARGA' : 'AVANZA ALERTA'; B.tagCol = '#f5c542';
+    return { vessels: [A, B], span: 9, cx: -0.4, cy: 1.35, tmax: 24, sectors: null, okR: 0.3, badR: 0.15,
+      under: under(poly, (sim, ctx) => { lab(sim, ctx, 'recodo sin visibilidad', -1.8, 1.4); ctx.fillStyle = 'rgba(255,255,255,.1)'; }),
+      over: (sim, ctx) => { for (const [k, v] of [['sa', A], ['sb', B]]) { const t0 = sim.ev[k]; if (t0 == null) continue; for (let i = 0; i < 3; i++) { const e = sim.t - t0 - i * 0.7; if (e < 0 || e > 3) continue; ctx.strokeStyle = `rgba(245,197,66,${0.8 * (1 - e / 3)})`; ctx.lineWidth = 2 * sim.u; ctx.beginPath(); ctx.arc(sim.X(v.x), sim.Y(v.y), sim.N(e * 0.6 + 0.2), 0, 7); ctx.stroke(); } } },
+      hud: sim => pairHud(sim, [['Señal acústica', sim.ev.sa == null ? 'aún no' : 'una pitada larga'], ['Velocidad A / B', A.s.toFixed(0) + ' / ' + B.s.toFixed(0) + ' kn']], 'Cruce seguro en el recodo') };
+  }
+  const poly = [[-4.8, 0], [4.8, 0]];
+  if (mode === 'cruce') {
+    A = V({ name: 'A', x: -2.6, y: -0.24, h: 90, s: 10, col: '#6fb7ff', size: 1.25 }); C = V({ type: 'VEL', name: 'C', x: 0.15, y: -0.62, h: 0, s: 0, col: '#ffd166', boom: 18, size: 0.9 });
+    if (P.cruce === 'mal') { C.s = C.ts = 6; C.orders.push({ s: 4, when: s => dst(A, C) < 0.9 }); A.orders.push({ s: 3, when: s => dst(A, C) < 1.0 }); A.tag = () => dst(A, C) < 1 ? 'ESTORBADO: DEBE FRENAR' : 'SIGUE POR ESTRIBOR'; A.tagCol = '#ff6b6b'; C.tag = 'CRUZA Y ESTORBA'; C.tagCol = '#ff6b6b'; }
+    else { C.orders.push({ s: 6, when: s => A.x > 0.9 }); A.tag = 'NAVEGA SIN SER ESTORBADO'; A.tagCol = '#27e08c'; C.tag = () => C.s < 1 && A.x < 0.9 ? 'ESPERA: <20 m' : 'CRUZA DETRÁS'; C.tagCol = '#27e08c'; }
+    return { vessels: [A, C], span: 9, cx: 0, cy: 0.3, tmax: 20, okR: 0.3, badR: 0.15, under: under(poly, (sim, ctx) => lab(sim, ctx, 'canal angosto', 3, 0.62)), noHit: false,
+      hud: sim => { const h = pairHud(sim, [['A: limita su tránsito al canal', 'sí'], ['C: velero menor de 20 m', 'no debe estorbar a A']], 'El buque menor no estorbó al buque del canal'); if (P.cruce === 'mal') { h.msg = sim.ended ? 'C cruzó por delante y obligó a A a frenar: estorbó el tránsito del buque que solo puede navegar dentro del canal.' : 'C cruza por delante de A…'; h.k = sim.ended ? 'bad' : 'info'; } return h; } };
+  }
+  const yA = mode === 'centro' ? 0 : -0.24, yB = mode === 'centro' ? 0.0 : 0.24;
+  A = V({ name: 'A', x: -3.2, y: yA, h: 90, s: 10, col: '#6fb7ff' }); B = V({ name: 'B', x: 3.2, y: yB, h: 270, s: 10, col: '#ffd166' });
+  if (mode === 'centro') { A.tag = 'EN EL CENTRO DEL CANAL'; B.tag = 'EN EL CENTRO DEL CANAL'; A.tagCol = B.tagCol = '#ff6b6b'; } else { A.tag = 'POR SU ESTRIBOR'; B.tag = 'POR SU ESTRIBOR'; A.tagCol = B.tagCol = '#27e08c'; }
+  return { vessels: [A, B], span: 9, cx: 0, cy: 0.3, tmax: 20, okR: 0.35, badR: 0.2, under: under(poly, (sim, ctx) => { lab(sim, ctx, 'límite exterior norte', 0, 0.7 + 0.0); lab(sim, ctx, 'límite exterior sur', 0, -0.62); }),
+    hud: sim => pairHud(sim, [['Posición de A en el canal', yA === 0 ? 'eje central' : 'lado de estribor'], ['Posición de B en el canal', yB === 0 ? 'eje central' : 'lado de estribor']], 'Cada buque navegó por su banda de estribor') };
+}
+/* ---- Dispositivo de separación del tráfico: regla 10 ---- */
+function tssScene(P) {
+  const mode = P.mode || 'ext';
+  const A = V({ name: 'A', h: 90, s: 11, col: '#6fb7ff' }), traffic = [V({ x: 3.8, y: 0.58, h: 270, s: 11, col: '#9fb3c8', name: '' }), V({ x: -2.8, y: -0.6, h: 90, s: 10, col: '#9fb3c8', name: '' })];
+  let ang = 0, txt = '';
+  if (mode === 'ext') { Object.assign(A, { x: -4.4, y: -0.58, h: 90 }); ang = 0; txt = 'entra por el extremo del carril'; A.tag = 'ENTRA POR EL EXTREMO'; A.tagCol = '#27e08c'; }
+  if (mode === 'lat') { Object.assign(A, { x: -3.7, y: -2.3, h: 55 }); A.orders.push({ h: 90, when: () => A.y >= -0.55 }); ang = 35; txt = 'ángulo pequeño con el flujo'; A.tag = 'ENTRADA LATERAL · 35°'; A.tagCol = '#f5c542'; }
+  if (mode === 'brusca') { Object.assign(A, { x: -1.6, y: -2.5, h: 0 }); A.orders.push({ h: 90, when: () => A.y >= -0.5 }); ang = 90; txt = 'ángulo grande: evitar'; A.tag = 'ENTRADA LATERAL · 90°'; A.tagCol = '#ff6b6b'; }
+  if (mode === 'cruce') { Object.assign(A, { x: 1.0, y: -2.5, h: 0 }); ang = 90; txt = 'cruce perpendicular al flujo'; A.tag = 'CRUZA A 90°'; A.tagCol = '#27e08c'; }
+  if (mode === 'oblicuo') { Object.assign(A, { x: -1.2, y: -2.5, h: 35 }); ang = 55; txt = 'cruce oblicuo: evitar'; A.tag = 'CRUZA EN OBLICUO'; A.tagCol = '#ff6b6b'; }
+  const arrows = (sim, ctx, y, dir) => { ctx.fillStyle = 'rgba(255,92,200,.55)'; for (let x = -4; x <= 4; x += 1.6) { const X = sim.X(x), Y = sim.Y(y), s = 7 * sim.u * dir; ctx.beginPath(); ctx.moveTo(X + s * 2, Y); ctx.lineTo(X - s, Y - s); ctx.lineTo(X - s * 0.2, Y); ctx.lineTo(X - s, Y + s); ctx.closePath(); ctx.fill(); } };
+  return { vessels: [A, ...traffic], span: 10, cx: 0, cy: -0.25, tmax: 20, noHit: true,
+    under: (sim, ctx) => { ctx.fillStyle = 'rgba(255,92,200,.07)'; ctx.fillRect(0, sim.Y(0.9), sim.W, sim.N(1.8)); ctx.fillStyle = 'rgba(255,92,200,.18)'; ctx.fillRect(0, sim.Y(0.3), sim.W, sim.N(0.6)); ctx.strokeStyle = 'rgba(255,92,200,.55)'; ctx.lineWidth = 1.5 * sim.u; for (const y of [0.9, 0.3, -0.3, -0.9]) { ctx.beginPath(); ctx.moveTo(0, sim.Y(y)); ctx.lineTo(sim.W, sim.Y(y)); ctx.stroke(); } arrows(sim, ctx, 0.6, -1); arrows(sim, ctx, -0.6, 1);
+      ctx.font = `600 ${11 * sim.u}px "IBM Plex Mono",monospace`; ctx.fillStyle = 'rgba(255,170,230,.95)'; ctx.textAlign = 'left'; ctx.fillText('carril hacia el oeste', sim.X(-4.8), sim.Y(1.02)); ctx.fillText('carril hacia el este', sim.X(-4.8), sim.Y(-1.04)); ctx.textAlign = 'right'; ctx.fillText('zona de separación', sim.X(4.8), sim.Y(0.0)); },
+    hud: sim => ({ rows: [['Maniobra', txt], ['Ángulo con el flujo general', ang + '°'], ['Criterio de la regla', ang === 0 || ang === 90 ? 'conforme' : (ang <= 35 ? 'ángulo lo más pequeño posible' : 'no conforme: evitar')]], msg: ang === 0 ? 'Entrada por el extremo: es lo habitual y lo preferible.' : ang === 35 ? 'Si debe entrar lateralmente, hágalo con el menor ángulo posible.' : ang === 90 && mode === 'cruce' ? 'Si debe cruzar, hágalo lo más perpendicular posible al flujo.' : 'Esta maniobra no se ajusta a la regla 10: evítela.', k: (ang === 0 || (mode === 'cruce') || ang === 35) ? 'ok' : 'bad' }) };
+}
+/* ---- Categorías de buques: regla 18 ---- */
+const CAT = { NUC: { n: 'Buque sin gobierno', r: 1, s: 1 }, RAM: { n: 'Capacidad de maniobra restringida', r: 1, s: 3 }, PES: { n: 'Buque dedicado a la pesca', r: 3, s: 4 }, VEL: { n: 'Buque de vela', r: 4, s: 6 }, MEC: { n: 'Propulsión mecánica en navegación', r: 5, s: 12 }, CBD: { n: 'Restringido por su calado', r: 0, s: 8 } };
+function giveWay(a, b) { /* devuelve {g:'A'|'B'|null, why} */
+  if (a === b) return { g: null, why: a === 'MEC' ? 'Dos buques de propulsión mecánica: se resuelve por las reglas 13 a 17 (aquí, cruce: regla 15).' : a === 'VEL' ? 'Dos buques de vela: se resuelve por la regla 12.' : 'Categorías iguales: la regla 18 no fija prioridad entre ellas.' };
+  if (a === 'CBD' || b === 'CBD') { const o = a === 'CBD' ? b : a; if (o === 'NUC' || o === 'RAM') return { g: null, why: 'Los buques sin gobierno y de maniobra restringida no están obligados a evitar estorbar al restringido por calado.' }; return { g: a === 'CBD' ? 'B' : 'A', why: 'Todo buque, salvo el sin gobierno y el de maniobra restringida, evita estorbar el tránsito seguro del restringido por su calado (que exhibe las señales de la regla 28).' }; }
+  const ra = CAT[a].r, rb = CAT[b].r; if (ra === rb) return { g: null, why: 'La regla 18 no fija prioridad entre buques sin gobierno y de maniobra restringida.' };
+  const g = ra > rb ? 'A' : 'B', gk = g === 'A' ? a : b, sk = g === 'A' ? b : a;
+  const nm = { NUC: 'un buque sin gobierno', RAM: 'un buque de maniobra restringida', PES: 'un buque dedicado a la pesca', VEL: 'un buque de vela', MEC: 'un buque de propulsión mecánica' };
+  return { g, why: (gk === 'MEC' ? 'Un buque de propulsión mecánica' : gk === 'VEL' ? 'Un buque de vela' : 'Un buque dedicado a la pesca') + ' se mantiene apartado de ' + nm[sk] + (gk === 'PES' ? ', en la medida de lo posible' : '') + '.' };
+}
+function hierScene(P) {
+  const ca = P.a || 'MEC', cb = P.b || 'VEL', r = giveWay(ca, cb), gw = r.g || 'A';
+  const sp = k => CAT[k].s, S = gw === 'A' ? 'B' : 'A';
+  const mk = (n, k, col) => V({ type: k, name: n, s: sp(k), col, boom: 25, rate: 25 });
+  const A = mk('A', ca, '#6fb7ff'), B = mk('B', cb, '#ffd166'); const o = { A, B };
+  Object.assign(B, { x: 2.2, y: 0.15, h: 270 }); B.th = 270;
+  Object.assign(A, { x: 0, y: -2.2, h: 0 });
+  const Gv = o[gw], Sv = o[S]; if (Sv.s < 0.5) Sv.h = Sv.th = 270; Sv.s = Sv.ts = Math.max(Sv.s, 0.6);
+  if (gw === 'A') A.h = A.th = interceptH(A, A.s, B, vel(B)); else B.h = B.th = interceptH(B, B.s, A, vel(A));
+  const canAct = Gv.type !== 'NUC' && Gv.type !== 'RAM';
+  if (r.g && canAct) Gv.orders.push({ dh: 55, when: () => pair(A, B).r <= 1.4 });
+  if (r.g) { Gv.tag = 'SE APARTA'; Gv.tagCol = '#ff9f43'; Sv.tag = Sv.type === 'CBD' ? 'NO DEBE SER ESTORBADO' : 'SIGUE A RUMBO'; Sv.tagCol = '#27e08c'; } else { A.tag = B.tag = 'SIN PRIORIDAD FIJADA EN R.18'; A.tagCol = B.tagCol = '#9db3c9'; if (ca === 'MEC' || ca === 'VEL') { A.orders.push({ dh: 55, when: () => pair(A, B).r <= 1.4 }); } }
+  return { vessels: [A, B], span: 8, cx: 0.9, cy: -0.9, tmax: 18, noHit: false, okR: 0.45, badR: 0.2, sectors: null, why: r.why,
+    over: (sim, ctx) => lineAB(sim, ctx),
+    hud: sim => { const p = pairHud(sim, [['A', CAT[ca].n], ['B', CAT[cb].n]], 'La maniobra de quien debía apartarse resolvió la situación'); p.msg = sim.ended ? p.msg : r.why; return p; } };
+}
+
+/* ---- Riesgo de abordaje: regla 7 ---- */
+function riskScene(P) {
+  const mode = P.mode || 'constante', A = V({ name: 'A', h: 0, s: 12, col: '#6fb7ff' }); let B;
+  if (mode === 'constante') { B = V({ name: 'B', h: 270, s: 12, col: '#ffd166' }); Object.assign(A, place({ x: 0, y: 0.2 }, 0, 12, 12)); Object.assign(B, place({ x: 0, y: 0.2 }, 270, 12, 12)); }
+  else if (mode === 'cambia') { Object.assign(A, { x: 0, y: -2.2 }); B = V({ name: 'B', x: 2.6, y: 1.6, h: 270, s: 14, col: '#ffd166' }); }
+  else { Object.assign(A, { x: 0, y: -2.2 }); B = V({ name: 'B', x: 2.6, y: 1.4, h: 270, s: 10, col: '#ffd166', size: 2.6 }); }
+  const A0 = { x: A.x, y: A.y, h: A.h, s: A.s }, B0 = { x: B.x, y: B.y, h: B.h, s: B.s }, tmax = mode === 'constante' ? 9.5 : mode === 'cambia' ? 15 : 15;
+  const at = (v0, t) => ({ x: v0.x + vel(v0)[0] * t, y: v0.y + vel(v0)[1] * t });
+  const reads = t => { const o = []; for (let k = 0; k * 1.5 <= t + 1e-6; k++) { const tt = k * 1.5, a = at(A0, tt), b = at(B0, tt); o.push({ t: tt, a, b, brg: brgOf(a, b) }); } return o; };
+  B.tag = mode === 'grande' ? 'BUQUE GRANDE · DISTANCIA CORTA' : null; B.tagCol = '#ff9f43';
+  return { vessels: [A, B], span: 9, cx: 0.3, cy: -0.2, tmax, noHit: true, okR: 1.0, badR: 0.5,
+    over: (sim, ctx) => { reads(sim.t).forEach((r, i) => { dashLine(ctx, sim.X(r.a.x), sim.Y(r.a.y), sim.X(r.b.x), sim.Y(r.b.y), 'rgba(124,240,255,.55)', 1.3 * sim.u, [5, 5]); ctx.fillStyle = '#7cf0ff'; ctx.beginPath(); ctx.arc(sim.X(r.b.x), sim.Y(r.b.y), 3 * sim.u, 0, 7); ctx.fill(); }); },
+    hud: sim => { const rs = reads(sim.t), p = pair(A, B), txt = (rs.length > 6 ? '… · ' : '') + rs.slice(-6).map(r => String(Math.round(r.brg)).padStart(3, '0') + '°').join(' · '), d = rs.length > 1 ? Math.abs(w180(rs[rs.length - 1].brg - rs[0].brg)) : 0;
+      const verdict = mode === 'constante' ? ['Demora casi constante con distancia decreciente: existe riesgo de abordaje.', 'bad'] : mode === 'cambia' ? ['La demora cambia de forma apreciable: no hay riesgo (CPA amplio).', 'ok'] : ['La demora cambia, pero el buque es grande y pasa muy cerca: puede existir riesgo. Ante la duda, se supone que existe.', 'warn'];
+      return { rows: [['Distancia A–B', p.r.toFixed(2) + ' mn'], ['Lecturas de demora (cada 1,5 min)', txt], ['Variación acumulada de la demora', d.toFixed(0) + '°'], ['CPA / TCPA', p.cpa.toFixed(2) + ' mn / ' + p.tcpa.toFixed(1) + ' min']], msg: verdict[0], k: verdict[1] }; } };
+}
+/* ---- Método de seis pasos ---- */
+const PASOS = [[0, 'Vigilar', 'Vista, oído y radar exploran el entorno de forma continua.'], [1.2, 'Detectar', 'Se identifica un blanco y se sigue su movimiento.'], [2.4, 'Evaluar', 'Demora, distancia, CPA y TCPA muestran si existe riesgo.'], [3.6, 'Decidir', 'Se determina la regla aplicable y quién debe apartarse.'], [4.5, 'Maniobrar', 'Cambio de rumbo anticipado, claro y decidido.'], [8.5, 'Verificar', 'Se comprueba el paso seguro hasta quedar en franquía.']];
+function metodoScene(P) {
+  const sc = crossingScene({ who: 'estribor', act: 'ninguna', noTag: true }); const [A, B] = sc.vessels; A.orders.push({ dh: 55, at: 4.5 }); sc.tmax = 17;
+  const ph = t => { let k = 0; PASOS.forEach((p, i) => { if (t >= p[0]) k = i; }); return k; };
+  sc.sectors = null; sc.phase = ph;
+  sc.banner = sim => ({ text: (ph(sim.t) + 1) + ' · ' + PASOS[ph(sim.t)][1].toUpperCase(), col: '#f5c542' });
+  sc.over = (sim, ctx) => { const k = ph(sim.t), ax = sim.X(A.x), ay = sim.Y(A.y), bx = sim.X(B.x), by = sim.Y(B.y), u = sim.u;
+    if (k === 0) { const a = (sim.t * 2.6) % (Math.PI * 2); ctx.strokeStyle = 'rgba(124,240,255,.35)'; ctx.lineWidth = 2 * u; ctx.beginPath(); ctx.arc(ax, ay, sim.N(3.4), 0, 7); ctx.stroke(); ctx.fillStyle = 'rgba(124,240,255,.16)'; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.arc(ax, ay, sim.N(3.4), a - 0.5, a); ctx.closePath(); ctx.fill(); }
+    if (k >= 1) { ctx.strokeStyle = '#7cf0ff'; ctx.lineWidth = 2 * u; ctx.beginPath(); ctx.arc(bx, by, 18 * u, 0, 7); ctx.stroke(); ctx.fillStyle = '#7cf0ff'; ctx.font = `600 ${11 * u}px "IBM Plex Mono"`; ctx.textAlign = 'left'; ctx.fillText('contacto B', bx + 24 * u, by + 4 * u); }
+    if (k === 2) { lineAB(sim, ctx); const p = pair(A, B); ctx.fillStyle = '#fff'; ctx.font = `600 ${12 * u}px "IBM Plex Mono"`; ctx.textAlign = 'center'; ctx.fillText(`demora ${p.brg.toFixed(0)}° · CPA ${p.cpa.toFixed(2)} mn · TCPA ${p.tcpa.toFixed(1)} min`, (ax + bx) / 2, (ay + by) / 2 - 12 * u); }
+    if (k === 3) { A.tag = 'B POR ESTRIBOR → REGLA 15: CEDO EL PASO'; A.tagCol = '#ff9f43'; } else if (k === 4) { A.tag = 'CAMBIO DE RUMBO CLARO A ESTRIBOR'; A.tagCol = '#ff9f43'; } else if (k === 5) { A.tag = pair(A, B).r > 1.2 && sim.t > 11 ? 'FRANQUÍA: PASO SEGURO' : 'COMPRUEBA EL PASO'; A.tagCol = '#27e08c'; } else A.tag = null;
+    if (k >= 4) lineAB(sim, ctx); };
+  sc.hud = sim => { const p = pair(A, B), k = ph(sim.t); return { rows: [['Paso actual', (k + 1) + ' de 6 · ' + PASOS[k][1]], ['Distancia A–B', p.r.toFixed(2) + ' mn'], ['CPA / TCPA', p.cpa.toFixed(2) + ' mn / ' + p.tcpa.toFixed(1) + ' min'], ['Menor distancia', isFinite(sim.minR) ? sim.minR.toFixed(2) + ' mn' : '—']], msg: PASOS[k][2], k: 'info' }; };
+  return sc;
+}
+function headless(build, P, tmax) { const s = new Sim({ getContext: () => null }, build, P); while (s.t < (tmax || s.sc.tmax) && !s.hit) s.step(0.05); return s; }
+if (false) module.exports = { riskScene, Sim, crossingScene, standOnScene, headOnScene, overtakeScene, sailScene, channelScene, tssScene, hierScene, fogScene, metodoScene, headless, pair, giveWay };
+
+'use strict';
+/* ===== Utilidades de interfaz ===== */
+const $ = (s, r) => (r || document).querySelector(s);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let cleanups = [], uidN = 0; const uid = () => 'c' + (++uidN);
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const link = n => `<a class="chip" href="#regla-${n}">Regla ${n}</a>`;
+
+function buildCtrls(host, defs, P, change) {
+  host.innerHTML = '';
+  defs.forEach(d => {
+    if (d.when && !d.when(P)) return;
+    const w = document.createElement('div'); w.className = 'ctl';
+    if (d.type === 'seg') {
+      w.innerHTML = `<span class="cl">${d.label}</span><div class="seg" role="group" aria-label="${d.label}">` + d.opts.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${String(P[d.k]) === String(v)}">${l}</button>`).join('') + '</div>';
+      w.querySelectorAll('button').forEach(b => b.onclick = () => { P[d.k] = b.dataset.v; change(d.k); });
+    } else if (d.type === 'range') {
+      const id = uid(), f = d.fmt || (v => v);
+      w.innerHTML = `<label class="cl" for="${id}">${d.label}</label><div class="rg"><input id="${id}" type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${P[d.k]}"><output>${f(P[d.k])}</output></div>`;
+      const i = $('input', w), o = $('output', w); i.oninput = () => { P[d.k] = +i.value; o.textContent = f(P[d.k]); change(d.k, true); };
+    } else if (d.type === 'check') {
+      const id = uid(); w.innerHTML = `<label class="ck" for="${id}"><input id="${id}" type="checkbox" ${P[d.k] ? 'checked' : ''}>${d.label}</label>`;
+      $('input', w).onchange = e => { P[d.k] = e.target.checked; change(d.k); };
+    } else if (d.type === 'select') {
+      const id = uid(); w.innerHTML = `<label class="cl" for="${id}">${d.label}</label><select id="${id}">` + d.opts.map(([v, l]) => `<option value="${v}" ${P[d.k] === v ? 'selected' : ''}>${l}</option>`).join('') + '</select>';
+      $('select', w).onchange = e => { P[d.k] = e.target.value; change(d.k); };
+    }
+    host.appendChild(w);
+  });
+}
+function fitCanvas(cv, wrap) { const dpr = Math.min(2, window.devicePixelRatio || 1), w = wrap.clientWidth, h = wrap.clientHeight; cv.width = Math.max(10, Math.round(w * dpr)); cv.height = Math.max(10, Math.round(h * dpr)); }
+
+/* Escenario con simulación: controles, lienzo, barra de reproducción y panel de lecturas */
+function simStage(host, cfg) {
+  const P = Object.assign({}, cfg.P || {});
+  host.innerHTML = `<div class="stage"><div class="ctrls"></div><div class="cvw"><canvas aria-label="${esc(cfg.label || 'Simulación de navegación')}"></canvas></div>
+  <div class="bar"><button class="btn pri" data-a="play" type="button"></button><button class="btn" data-a="rst" type="button">↺ Reiniciar</button><input type="range" min="0" max="1000" value="0" aria-label="Línea de tiempo"><span class="tm"></span>
+  <select aria-label="Velocidad"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+  <label class="ck"><input type="checkbox" data-a="night"> Noche (luces)</label></div>
+  <div class="hud"><dl></dl><p class="msg" role="status" aria-live="polite"></p></div><div class="extra"></div></div>`;
+  const cv = $('canvas', host), wrap = $('.cvw', host), sim = new Sim(cv, cfg.build, P), playB = $('[data-a=play]', host), scr = $('input[type=range]', host), tm = $('.tm', host), dl = $('dl', host), msg = $('.msg', host);
+  sim.loop = true; sim.playing = !reduced; if (cfg.night) { sim.night = true; $('[data-a=night]', host).checked = true; }
+  if (cfg.noNight) $('[data-a=night]', host).closest('label').style.display = 'none';
+  let dirty = true, drag = false, lastHud = '', raf, last = performance.now();
+  const label = () => { playB.textContent = sim.playing && !sim.ended ? '❚❚ Pausar' : '▶ Reproducir'; };
+  const ctrl = () => buildCtrls($('.ctrls', host), cfg.defs || [], P, (k, live) => { if (cfg.onChange) cfg.onChange(P, k); sim.reset(); sim.playing = !reduced; if (!live) ctrl(); dirty = true; label(); });
+  ctrl(); label();
+  playB.onclick = () => { if (sim.ended) { sim.reset(); sim.playing = true; } else sim.playing = !sim.playing; label(); dirty = true; };
+  $('[data-a=rst]', host).onclick = () => { sim.reset(); sim.playing = true; label(); dirty = true; };
+  $('select', host).onchange = e => { sim.mult = +e.target.value; };
+  $('[data-a=night]', host).onchange = e => { sim.night = e.target.checked; dirty = true; };
+  scr.oninput = () => { drag = true; sim.playing = false; sim.seek(scr.value / 1000 * sim.sc.tmax); label(); dirty = true; }; scr.onchange = () => { drag = false; };
+  const fit = () => { fitCanvas(cv, wrap); dirty = true; }; const ro = new ResizeObserver(fit); ro.observe(wrap); fit();
+  const frame = now => { const dt = Math.max(0, (now - last) / 1000); last = now; const was = sim.t; sim.advance(dt); if (sim.playing || dirty || sim.t !== was) { sim.draw(); dirty = false; hud(); } raf = requestAnimationFrame(frame); };
+  function hud() {
+    if (!drag) scr.value = Math.round(sim.t / sim.sc.tmax * 1000); tm.textContent = 't = ' + sim.t.toFixed(1) + ' min';
+    const h = sim.sc.hud ? sim.sc.hud(sim) : { rows: [], msg: '', k: 'info' }, key = JSON.stringify(h) + (sim.playing && !sim.ended);
+    if (key !== lastHud) { lastHud = key; dl.innerHTML = h.rows.map(r => `<div><dt>${r[0]}</dt><dd>${r[1]}</dd></div>`).join(''); msg.textContent = h.msg; msg.className = 'msg ' + (h.k || 'info'); label(); }
+    if (cfg.tick) cfg.tick(sim, host);
+  }
+  raf = requestAnimationFrame(frame);
+  cleanups.push(() => { cancelAnimationFrame(raf); ro.disconnect(); });
+  const api = { sim, P, host, redraw: () => { dirty = true; }, seek: t => { sim.seek(t); sim.playing = false; label(); dirty = true; }, extra: $('.extra', host) };
+  if (cfg.init) cfg.init(api); return api;
+}
+/* Escenario con lienzo propio (animación a medida) */
+function customStage(host, cfg) {
+  host.innerHTML = `<div class="stage"><div class="ctrls"></div><div class="cvw ${cfg.sq ? 'sq' : ''}"><canvas aria-label="${esc(cfg.label || 'Ilustración interactiva')}"></canvas></div><div class="hud"><dl></dl><p class="msg" role="status" aria-live="polite"></p></div><div class="extra"></div></div>`;
+  const P = Object.assign({}, cfg.P || {}), cv = $('canvas', host), wrap = $('.cvw', host), ctx = cv.getContext('2d'); let raf, last = performance.now(), T = 0, lastHud = '';
+  const api = { P, cv, ctx, wrap, extra: $('.extra', host) }; const dl = $('dl', host), msg = $('.msg', host);
+  const ctrl = () => buildCtrls($('.ctrls', host), cfg.defs || [], P, (k, live) => { if (cfg.onChange) cfg.onChange(P, k, api); if (!live) ctrl(); }); ctrl();
+  const fit = () => fitCanvas(cv, wrap); const ro = new ResizeObserver(fit); ro.observe(wrap); fit();
+  const frame = now => { const dt = Math.max(0, Math.min(0.1, (now - last) / 1000)); last = now; T += reduced ? 0 : dt; cfg.draw(ctx, cv, P, T, dt, api); const h = cfg.hud ? cfg.hud(P, T, api) : null; if (h) { const key = JSON.stringify(h); if (key !== lastHud) { lastHud = key; dl.innerHTML = h.rows.map(r => `<div><dt>${r[0]}</dt><dd>${r[1]}</dd></div>`).join(''); msg.textContent = h.msg; msg.className = 'msg ' + (h.k || 'info'); } } raf = requestAnimationFrame(frame); };
+  raf = requestAnimationFrame(frame); cleanups.push(() => { cancelAnimationFrame(raf); ro.disconnect(); });
+  if (cfg.init) cfg.init(api); return api;
+}
+
+/* ===== Contenido de las reglas ===== */
+const PARTS = { A: 'Parte A · Generalidades', B1: 'Parte B · Sección I · Cualquier condición de visibilidad', B2: 'Parte B · Sección II · Buques a la vista', B3: 'Parte B · Sección III · Visibilidad reducida' };
+const R = {};
+const rule = (n, part, title, lead, est, imp, apl, rel, stage) => R[n] = { n, part, title, lead, est, imp, apl, rel, stage };
+const cross = (extra) => Object.assign({ who: 'estribor', act: 'popa' }, extra);
+
+rule(1, 'A', 'Ámbito de aplicación', 'Define dónde rige el reglamento y qué normas locales o complementarias pueden coexistir con él.',
+  ['Se aplica a todos los buques en alta mar y en las aguas comunicadas con ella que sean navegables por buques de navegación marítima.', 'Las autoridades pueden establecer reglas especiales para radas, puertos, ríos, lagos y aguas interiores; deben coincidir, en lo posible, con el RIPA.', 'Se admiten luces, marcas o señales adicionales para determinados buques y operaciones, siempre que no se presten a confusión.', 'La OMI puede adoptar dispositivos de separación del tráfico, y para buques de construcción o misión especial pueden aprobarse disposiciones equivalentes cuando no sea viable el cumplimiento literal.'],
+  'Establece el marco geográfico y jurídico de todo el reglamento. Antes de aplicar cualquier otra regla es necesario saber en qué zona se navega y qué normas adicionales rigen en ella.',
+  'Antes de maniobrar, identifique también las reglas especiales y los esquemas de tráfico de la zona. En un puerto o un río pueden regir normas locales que complementan al RIPA.', [2, 10],
+  host => stageAmbito(host));
+rule(2, 'A', 'Responsabilidad', 'Ningún cumplimiento formal sustituye el juicio marinero: el reglamento no exime de responsabilidad.',
+  ['El cumplimiento del RIPA no exime de las consecuencias de una negligencia del buque, del propietario, del capitán o de la dotación.', 'Tampoco exime de observar las precauciones que exige la práctica normal del marino.', 'Al interpretar y cumplir las reglas se consideran los peligros de navegación, el riesgo de abordaje y las limitaciones de los buques.', 'Puede ser necesario apartarse de una regla para evitar un peligro inmediato.'],
+  'La regla 2 evita la aplicación mecánica o descontextualizada de las demás. La seguridad y la prevención prevalecen sobre la literalidad de una norma.',
+  'La regla 2 no autoriza a ignorar el RIPA por conveniencia: exige juicio marinero ante circunstancias excepcionales y peligro inmediato. Compare ambos comportamientos en la simulación.', [8, 17],
+  host => simStage(host, { build: standOnScene, P: { mode: 'mantener', bAct: 'no', rings: false }, label: 'Dos buques en rumbos que se cortan; el que debe ceder el paso no maniobra',
+    defs: [{ k: 'mode', type: 'seg', label: 'Conducta del buque A (sigue a rumbo)', opts: [['mantener', 'Mantiene rumbo hasta el final (literal)'], ['r2', 'Se aparta de la regla (regla 2 b)']] }] }));
+rule(3, 'A', 'Definiciones generales', 'Las categorías de buque dependen de su condición real, no de su nombre ni de su tamaño.',
+  ['Buque: toda embarcación utilizada o susceptible de utilizarse como medio de transporte sobre el agua. Propulsión mecánica: el buque movido por una máquina.', 'Buque de vela: navega a vela y no utiliza su maquinaria propulsora, si la lleva. Buque dedicado a la pesca: pesca con artes que restringen su maniobrabilidad (no incluye el curricán).', 'Sin gobierno: por una circunstancia excepcional es incapaz de maniobrar como exige el RIPA. Maniobra restringida: la naturaleza de su trabajo reduce su capacidad para apartarse.', 'Restringido por su calado: buque de propulsión mecánica cuyo calado, respecto de la profundidad y anchura disponibles, restringe mucho su capacidad de apartarse.', 'En navegación: no fondeado, ni amarrado a tierra, ni varado. A la vista: observación visual directa entre buques.'],
+  'La regla 18 y las reglas de luces y marcas dependen de la categoría del buque. Clasificar mal implica aplicar mal el reglamento.',
+  'Un remolcador no es automáticamente un buque de maniobra restringida: lo será solo si la operación restringe fuertemente su capacidad de apartarse. Use el clasificador para practicar.', [18, 19],
+  host => stageDefs(host));
+rule(4, 'B1', 'Aplicación de la Sección I', 'Las reglas 4 a 10 son la base de conducta y se aplican siempre, con independencia de la visibilidad.',
+  ['Las reglas de la Sección I (reglas 4 a 10) se aplican en cualquier condición de visibilidad.', 'La Sección II (reglas 11 a 18) solo entra en juego cuando los buques están a la vista uno del otro.', 'La Sección III (regla 19) cubre a los buques que no están a la vista cuando navegan cerca o dentro de una zona de visibilidad reducida.'],
+  'Ordena el reglamento por condiciones de visibilidad: la Sección I es el piso común y las otras dos lo complementan según el caso.',
+  'Elija las condiciones en el panel y observe qué secciones se activan. La detección por radar no equivale a estar a la vista.', [11, 19],
+  host => stageSecciones(host));
+rule(5, 'B1', 'Vigilancia', 'La vigilancia es visual, auditiva y con todos los medios disponibles; no se delega solo al radar.',
+  ['Todo buque mantendrá en todo momento una observación visual eficaz y continua del entorno, el tráfico, las luces, las marcas y los peligros.', 'También mantendrá vigilancia auditiva: escuchar las señales acústicas.', 'Se utilizarán todos los medios disponibles apropiados a las circunstancias y condiciones del momento.', 'La vigilancia integra observación, escucha, instrumentos y evaluación humana.'],
+  'Es la regla preventiva por excelencia: lo que no se detecta no puede evaluarse. Detectar a tiempo es el primer paso del método de prevención.',
+  'Active y desactive cada canal de detección en la simulación y compruebe qué contactos pasan inadvertidos con niebla o sin radar.', [6, 7],
+  host => stageVigilancia(host));
+rule(6, 'B1', 'Velocidad de seguridad', 'La velocidad debe permitir maniobrar con eficacia y detener el buque a una distancia apropiada.',
+  ['Todo buque mantendrá en todo momento una velocidad de seguridad que le permita actuar eficazmente para evitar el abordaje y pararse a una distancia apropiada.', 'Se tienen en cuenta: visibilidad, densidad de tráfico, maniobrabilidad (distancia de parada y capacidad de giro), viento, mar y corriente, calado frente a la profundidad disponible y limitaciones del radar.', 'No existe una velocidad universal: debe adaptarse a las condiciones del momento.'],
+  'La velocidad determina el tiempo y el espacio disponibles para reaccionar. A mayor velocidad, la distancia de parada crece con el cuadrado.',
+  'Si la distancia de parada supera la visibilidad, el buque no puede evitar un obstáculo que aparece a la vista. Ajuste velocidad, visibilidad y tipo de buque.', [7, 19],
+  host => stageVelocidad(host));
+rule(7, 'B1', 'Riesgo de abordaje', 'Se emplean todos los medios disponibles y, ante la duda, se supone que existe riesgo.',
+  ['Usar todos los medios apropiados: vista, oído, radar y demás medios disponibles.', 'Si hay duda, se supone que existe riesgo; la incertidumbre no justifica esperar pasivamente.', 'El radar se emplea correctamente: exploración a gran distancia y observación sistemática o punteo de los blancos.', 'No basar suposiciones en información incompleta, especialmente la obtenida por radar.', 'Una demora casi constante de un buque que se aproxima es indicio de riesgo; puede existir riesgo aun con variación de demora, sobre todo con buques grandes, remolques o distancias cortas.'],
+  'El riesgo debe determinarse antes de que la situación sea crítica. Es la decisión que activa el resto de las reglas de conducta.',
+  'Compare las tres situaciones. Las líneas azules son las lecturas de demora sucesivas: si son paralelas, la demora es constante y el encuentro se acerca.', [5, 8],
+  host => simStage(host, { build: riskScene, P: { mode: 'constante' }, noNight: true, label: 'Lecturas de demora sucesivas de un blanco',
+    defs: [{ k: 'mode', type: 'seg', label: 'Situación', opts: [['constante', 'Demora constante'], ['cambia', 'Demora que cambia'], ['grande', 'Buque grande y cercano']] }] }));
+rule(8, 'B1', 'Maniobras para evitar el abordaje', 'La maniobra debe ser anticipada, clara, decidida, eficaz y verificada.',
+  ['Si las circunstancias lo permiten, la acción será franca, hecha con tiempo y con la debida observancia de la buena práctica marinera.', 'Todo cambio de rumbo o de velocidad debe ser lo bastante amplio para ser percibido por otro buque; deben evitarse los pequeños cambios sucesivos.', 'Si hay espacio, un cambio de rumbo considerable puede ser la acción más eficaz; la maniobra debe producir un paso franco y a distancia segura.', 'Se comprueba la eficacia hasta que el otro buque esté pasado y en franquía. Si es necesario, reducir velocidad, parar o invertir la propulsión.', 'Quien tenga obligación de no estorbar maniobra prontamente; esa obligación no cesa por aproximarse con riesgo de abordaje, y el otro buque sigue obligado por la Parte B.'],
+  'Convierte la detección del riesgo en una acción comprensible para los demás buques. Una maniobra ambigua o tardía puede ser peor que no maniobrar.',
+  'Mueva la distancia a la que se maniobra y la amplitud del giro. La gráfica muestra la franquía que se obtiene para cada cambio de rumbo.', [16, 17],
+  host => stageManiobra(host));
+rule(9, 'B1', 'Canales angostos', 'Cada buque navega tan cerca como sea seguro del límite exterior del canal por su banda de estribor.',
+  ['Seguir tan cerca como sea seguro del límite exterior del canal que quede por su costado de estribor.', 'Los buques menores de 20 m y los de vela no deben estorbar el tránsito de buques que solo puedan navegar con seguridad dentro del canal; los buques dedicados a la pesca no deben estorbar a ningún otro dentro del canal.', 'No se debe cruzar el canal si ello estorba al buque que solo puede navegar con seguridad en él.', 'En un recodo sin visibilidad se navega alerta y con precaución, y se emite la señal acústica correspondiente. Debe evitarse fondear en el canal cuando las circunstancias lo permitan.'],
+  'En espacios reducidos el margen de maniobra se estrecha y la disciplina de posición evita encuentros de frente.',
+  'Alterne entre las situaciones. Navegar por el centro de un canal angosto convierte un cruce de rumbos opuestos en una vuelta encontrada.', [10, 18],
+  host => simStage(host, { build: channelScene, P: { mode: 'estribor', cruce: 'ok' }, noNight: true, label: 'Tránsito de buques en un canal angosto',
+    defs: [{ k: 'mode', type: 'seg', label: 'Situación', opts: [['estribor', 'Cada buque por su estribor'], ['centro', 'Ambos por el centro'], ['cruce', 'Buque menor que cruza'], ['recodo', 'Recodo sin visibilidad']] },
+      { k: 'cruce', type: 'seg', label: 'Conducta del buque menor', opts: [['ok', 'Espera y cruza detrás'], ['mal', 'Cruza por delante']], when: P => P.mode === 'cruce' }] }));
+rule(10, 'B1', 'Dispositivos de separación del tráfico', 'Los buques usan el carril apropiado, en el sentido general del tráfico, y evitan cruzar.',
+  ['Usar la vía apropiada y seguir la dirección general del tráfico en ella.', 'Mantenerse, en lo posible, apartado de la línea o zona de separación.', 'Entrar o salir normalmente por los extremos; si lo hace lateralmente, con el menor ángulo posible respecto del flujo.', 'Evitar cruzar las vías; si es necesario, hacerlo lo más perpendicular posible al flujo.', 'Extremar la precaución en los extremos del dispositivo y evitar fondear dentro de él. Los buques que no lo usan se mantienen apartados con el mayor margen posible.'],
+  'Ordena el tráfico intenso en zonas confluyentes, reduciendo los encuentros de frente y los cruces.',
+  'Pruebe cada tipo de entrada y de cruce. El criterio es simple: ángulos pequeños para entrar, perpendicular para cruzar.', [1, 9],
+  host => simStage(host, { build: tssScene, P: { mode: 'ext' }, noNight: true, label: 'Dispositivo de separación del tráfico',
+    defs: [{ k: 'mode', type: 'seg', label: 'Maniobra del buque A', opts: [['ext', 'Entra por el extremo'], ['lat', 'Entrada lateral suave'], ['brusca', 'Entrada lateral brusca'], ['cruce', 'Cruce perpendicular'], ['oblicuo', 'Cruce oblicuo']] }] }));
+rule(11, 'B2', 'Cuándo aplican las reglas de encuentro', 'Las reglas 12 a 18 se aplican solo cuando los buques están a la vista uno del otro.',
+  ['Las reglas de la Sección II (12 a 18) se aplican únicamente a los buques que están a la vista uno del otro.', 'Si no están a la vista y navegan en condiciones de visibilidad reducida, debe analizarse la regla 19, además de las reglas generales de la Sección I.', '"A la vista" significa que un buque puede ser observado visualmente desde el otro; no basta con detectarlo por radar.'],
+  'Distingue dos regímenes de conducta distintos. Aplicar las reglas de la Sección II a un buque que solo se ve en la pantalla del radar es un error de método.',
+  'Mueva el control de visibilidad: el límite del alcance visual decide qué sección rige durante el acercamiento.', [4, 19],
+  host => simStage(host, { build: fogScene, P: { vis: 2.5 }, noNight: true, label: 'Dos buques que se aproximan con visibilidad limitada',
+    defs: [{ k: 'vis', type: 'range', label: 'Alcance visual (mn)', min: 0.5, max: 6, step: 0.1, fmt: v => v.toFixed(1) + ' mn' }] }));
+rule(12, 'B2', 'Buques de vela', 'Entre dos buques de vela, la banda de recepción del viento y el barlovento determinan quién se aparta.',
+  ['Con viento por bandas contrarias, el buque que recibe el viento por babor se mantiene apartado del otro.', 'Con viento por la misma banda, el buque de barlovento se mantiene apartado del que está a sotavento.', 'Si recibe el viento por babor y no puede determinar con certeza la banda del otro, se mantiene apartado.', 'La banda de barlovento se determina respecto de la vela mayor cazada (o de la mayor vela de cuchillo en aparejo cruzado).'],
+  'Los veleros no usan la regla de estribor de los buques de propulsión mecánica: su criterio depende del viento.',
+  'Cambie de situación y observe la posición de la botavara. El buque de la bandera naranja es quien debe apartarse.', [15, 18],
+  host => simStage(host, { build: sailScene, P: { mode: 'contrarias' }, noNight: true, label: 'Dos veleros que se aproximan',
+    defs: [{ k: 'mode', type: 'seg', label: 'Situación', opts: [['contrarias', 'Viento por bandas contrarias'], ['misma', 'Viento por la misma banda'], ['duda', 'Duda sobre la banda del otro']] }] }));
+rule(13, 'B2', 'Buque que alcanza', 'Quien alcanza se mantiene apartado de la derrota del alcanzado hasta pasarlo y quedar en franquía.',
+  ['El buque que alcanza debe mantenerse apartado de la derrota del buque alcanzado, cualquiera que sea la maniobra.', 'Alcanza quien se aproxima desde una marcación a más de 22,5° a popa del través del otro buque.', 'De noche, solo vería la luz de alcance y ninguna luz de costado.', 'Si existe duda sobre si está alcanzando, debe considerarse buque que alcanza. La obligación continúa hasta adelantar completamente.'],
+  'Tiene prioridad sobre las reglas de cruce: un buque que alcanza no pasa a ser buque en situación de cruce por un cambio de marcación posterior.',
+  'Modifique la marcación: por debajo de 112,5° desde la proa (22,5° a popa del través) ya no es alcance, sino cruce.', [15, 18],
+  host => simStage(host, { build: overtakeScene, P: { brg: 165, q: 'estribor' }, label: 'Un buque rápido que alcanza a otro más lento',
+    defs: [{ k: 'brg', type: 'range', label: 'Marcación de B desde A (desde la proa)', min: 100, max: 180, step: 5, fmt: v => v + '°' }, { k: 'q', type: 'seg', label: 'B viene por', opts: [['estribor', 'Aleta de estribor'], ['babor', 'Aleta de babor']] }] }));
+rule(14, 'B2', 'Vuelta encontrada', 'Dos buques de propulsión mecánica en rumbos opuestos o casi opuestos caen ambos a estribor.',
+  ['Se aplica cuando dos buques de propulsión mecánica navegan en rumbos opuestos o casi opuestos con riesgo de abordaje.', 'Cada uno caerá a estribor, de modo que pasen por la banda de babor del otro.', 'Se reconoce porque el otro buque se ve por la proa o casi por la proa; de noche, luces de tope alineadas o casi alineadas y/o ambas luces de costado.', 'Si hay duda de que sea una vuelta encontrada, se supone que existe y se actúa en consecuencia.'],
+  'Es la única situación simétrica: ambos buques tienen la misma obligación y deben ejecutarla de la misma forma.',
+  'Compruebe qué ocurre si uno cae a babor mientras el otro cae a estribor. Active la vista nocturna para ver las luces.', [15, 8],
+  host => simStage(host, { build: headOnScene, P: { mode: 'ok' }, label: 'Dos buques de propulsión mecánica en rumbos opuestos',
+    defs: [{ k: 'mode', type: 'seg', label: 'Situación', opts: [['ok', 'Ambos a estribor'], ['babor', 'Uno cae a babor'], ['duda', 'Rumbos casi opuestos']] }] }));
+rule(15, 'B2', 'Situación de cruce', 'Quien tiene al otro por su costado de estribor se mantiene apartado y evita cortarle la proa.',
+  ['Se aplica a dos buques de propulsión mecánica que se cruzan con riesgo de abordaje.', 'El buque que tiene al otro por su costado de estribor se mantiene apartado de la derrota del otro.', 'Si las circunstancias lo permiten, evita cortarle la proa al otro buque.', 'De noche, quien percibe la luz roja del otro por su estribor es el que debe ceder el paso.'],
+  'Es el encuentro más frecuente en la mar: la mayoría de las aproximaciones no son de frente ni por alcance, sino con rumbos que se cortan.',
+  'Cambie qué buque cede y cómo pasa. Active la vista nocturna: la luz que A observa de B indica quién debe apartarse.', [14, 16, 17],
+  host => simStage(host, { build: crossingScene, P: cross(), label: 'Dos buques de propulsión mecánica con rumbos que se cortan',
+    defs: [{ k: 'who', type: 'seg', label: 'Posición de B respecto de A', opts: [['estribor', 'B por estribor de A (A cede)'], ['babor', 'B por babor de A (B cede)']] }, { k: 'act', type: 'seg', label: 'Cómo pasa el buque que cede', opts: [['popa', 'Por la popa del otro'], ['proa', 'Cortando la proa']] }] }));
+rule(16, 'B2', 'Buque que cede el paso', 'Debe maniobrar con anticipación suficiente y de forma decidida para quedar bien franco del otro.',
+  ['Todo buque obligado a mantenerse apartado de la derrota de otro maniobrará, en lo posible, con anticipación suficiente y de forma decidida.', 'La maniobra debe ser temprana, clara y perceptible.', 'No basta con una corrección tardía o ambigua.', 'Se vincula directamente con la regla 8: cambios amplios, no pequeñas correcciones sucesivas.'],
+  'Convierte la obligación abstracta de "apartarse" en una conducta observable que el otro buque pueda interpretar sin dudas.',
+  'Ensaye una maniobra decidida, una tardía y una de pequeñas correcciones. Mida la franquía con la distancia mínima alcanzada.', [8, 17],
+  host => simStage(host, { build: crossingScene, P: cross({ dist: 2.2, turn: 60 }), label: 'El buque A debe ceder el paso al buque B',
+    defs: [{ k: 'act', type: 'seg', label: 'Maniobra de A', opts: [['popa', 'Decidida y a tiempo'], ['tardia', 'Tardía'], ['ambigua', 'Pequeñas correcciones'], ['ninguna', 'No maniobra']] }, { k: 'dist', type: 'range', label: 'Distancia a la que maniobra', min: 0.8, max: 3, step: 0.1, fmt: v => v.toFixed(1) + ' mn', when: P => P.act === 'popa' || P.act === 'ambigua' }, { k: 'turn', type: 'range', label: 'Amplitud del cambio de rumbo', min: 10, max: 90, step: 5, fmt: v => v + '°', when: P => P.act !== 'ninguna' && P.act !== 'tardia' }] }));
+rule(17, 'B2', 'Buque que sigue a rumbo', 'Mantiene rumbo y velocidad, pero puede y debe maniobrar cuando el otro no actúa a tiempo.',
+  ['Cuando uno de dos buques debe apartarse, el otro mantiene su rumbo y velocidad.', 'Puede maniobrar tan pronto como resulte evidente que el otro buque no actúa de acuerdo con las reglas.', 'Si el abordaje no puede evitarse solo con la maniobra del que cede, debe actuar de la manera que mejor contribuya a evitarlo.', 'En situación de cruce, debe evitar, si las circunstancias lo permiten, caer a babor para un buque que está por su propia banda de babor.', 'La regla 17 no libera al buque que cede el paso de su obligación de mantenerse apartado.'],
+  'Equilibra la previsibilidad (el que cede puede calcular) con la seguridad (nadie queda atado a una regla cuando el otro falla).',
+  'Observe las tres etapas por distancia. Compare cuándo conviene maniobrar y por qué caer a babor reduce la franquía.', [2, 16],
+  host => simStage(host, { build: standOnScene, P: { mode: 'mantener', bAct: 'no' }, label: 'El buque A sigue a rumbo; el buque B debe ceder y no lo hace',
+    defs: [{ k: 'mode', type: 'seg', label: 'Conducta del buque A', opts: [['mantener', 'Mantiene hasta el final'], ['e2', 'Maniobra en etapa 2'], ['e3', 'Maniobra en etapa 3'], ['babor', 'Cae a babor (a evitar)']] }, { k: 'bAct', type: 'seg', label: 'Conducta del buque B', opts: [['no', 'No cede'], ['tarde', 'Cede tarde']] }],
+    tick: (sim, host) => { const r = pair(sim.vs[0], sim.vs[1]).r, k = r > 1.7 ? 0 : r > 1.1 ? 1 : 2, t = $('.tl', host); if (t) [...t.children].forEach((d, i) => d.classList.toggle('on', i === k)); },
+    init: api => { api.extra.innerHTML = '<div class="cl" style="margin:12px 0 4px">Etapa según la distancia entre buques</div><div class="tl"><div>1 · MANTENER</div><div>2 · PUEDE MANIOBRAR</div><div>3 · DEBE ACTUAR</div></div>'; } }));
+rule(18, 'B2', 'Responsabilidades entre categorías', 'Establece quién se aparta de quién según la capacidad de maniobra de cada categoría de buque.',
+  ['Propulsión mecánica: se aparta de sin gobierno, maniobra restringida, pesca y vela.', 'Vela: se aparta de sin gobierno, maniobra restringida y pesca.', 'Pesca: en la medida de lo posible, se aparta de sin gobierno y maniobra restringida.', 'Todos, salvo los sin gobierno y de maniobra restringida, evitan estorbar a un buque restringido por su calado que exhiba las señales de la regla 28.', 'La regla 18 está subordinada a las reglas 9 (canales angostos), 10 (separación del tráfico) y 13 (alcance).'],
+  'Reconoce que los buques con menos capacidad de maniobra no pueden apartarse como los demás, y traslada la obligación a quien sí puede.',
+  'Elija dos categorías en la matriz o con los selectores. La simulación muestra quién se aparta y por qué.', [3, 12, 15],
+  host => stageHierarquia(host));
+rule(19, 'B3', 'Conducta en visibilidad reducida', 'Velocidad segura, máquinas listas y especial cuidado con las maniobras que deben evitarse.',
+  ['Se aplica a buques que no están a la vista uno del otro cuando navegan cerca o dentro de una zona de visibilidad reducida.', 'Velocidad de seguridad adaptada a la visibilidad; los buques de propulsión mecánica tienen las máquinas listas para maniobrar de inmediato.', 'Con radar, se determina si se crea una aproximación excesiva o riesgo y se maniobra con suficiente antelación. Se evita, en lo posible, caer a babor para un blanco a proa del través (salvo que se le alcance) y alterar el rumbo hacia un buque por el través o por la popa.', 'Si se oye una señal de niebla aparentemente a proa del través, o no puede evitarse la aproximación excesiva, se reduce a la velocidad mínima de gobierno; si es necesario, se suprime la arrancada y se navega con extremo cuidado.'],
+  'La niebla no suspende la vigilancia: exige mayor cautela, velocidad segura y disponibilidad inmediata para maniobrar.',
+  'Coloque un blanco en la pantalla de radar (toque o arrastre) y vea qué maniobras desaconseja la regla.', [5, 6, 7],
+  host => stageRadar(host));
+
+/* ===== Escenarios personalizados ===== */
+function stageAmbito(host) {
+  const Z = [['Alta mar', 'Todos los buques', 'Rige el RIPA completo. Es el ámbito principal del reglamento.'], ['Dispositivo de separación del tráfico', 'OMI', 'La OMI puede adoptar dispositivos de separación del tráfico; rige la regla 10 junto con el RIPA.'], ['Aguas comunicadas con alta mar', 'Navegables por buques de navegación marítima', 'Rige el RIPA: estuarios, accesos y bahías abiertas navegables por buques de navegación marítima.'], ['Puerto y rada', 'Reglas especiales locales', 'Las autoridades pueden dictar reglas especiales; deben coincidir en lo posible con el RIPA. Se admiten señales adicionales sin confusión.'], ['Río y aguas interiores', 'Reglas especiales locales', 'Ríos, lagos y aguas interiores pueden tener reglas propias. El capitán debe conocerlas antes de maniobrar.']];
+  host.innerHTML = `<div class="stage"><div class="svgw"><svg viewBox="0 0 800 420" role="img" aria-label="Zonas de aplicación del RIPA">
+  <rect width="800" height="420" fill="#0e3d5e"/>
+  <path d="M800 0H470C500 50 560 80 590 120C610 150 615 185 600 215C650 240 700 245 800 245Z" fill="#37503a"/>
+  <path d="M560 235L560 175L640 175L640 235" fill="none"/>
+  <rect x="575" y="150" width="70" height="60" fill="#0e3d5e"/><path d="M572 150L572 215M648 150L648 215" stroke="#9db3c9" stroke-width="5"/>
+  <path d="M645 165C690 150 700 110 740 100C770 92 790 70 800 50" fill="none" stroke="#0e3d5e" stroke-width="22" stroke-linecap="round"/>
+  <ellipse cx="730" cy="190" rx="52" ry="26" fill="#0e3d5e"/>
+  <g transform="rotate(-18 285 305)"><rect x="205" y="278" width="170" height="54" fill="rgba(255,92,200,.12)" stroke="rgba(255,92,200,.6)"/><line x1="205" y1="305" x2="375" y2="305" stroke="rgba(255,92,200,.6)" stroke-dasharray="5 4"/><path d="M235 291l22 0-5-5m5 5-5 5M345 319l-22 0 5-5m-5 5 5 5" stroke="#ff7ad8" stroke-width="2" fill="none"/></g>
+  <g font-family="IBM Plex Mono,monospace" font-size="12" fill="#cfe3f5"><text x="50" y="80">ALTA MAR</text><text x="215" y="372">DST (regla 10)</text><text x="400" y="225">AGUAS COMUNICADAS</text><text x="582" y="140">PUERTO</text><text x="682" y="85">RÍO</text><text x="700" y="195" font-size="11">lago</text></g>
+  <path id="rt" d="M40 380L250 322L420 262L530 205L610 185L650 160L740 110L790 60" fill="none" stroke="rgba(245,197,66,.45)" stroke-width="2" stroke-dasharray="6 6"/>
+  <g id="sh"><path d="M0 -13L7 9L0 5L-7 9Z" fill="#f5c542" stroke="#071320" stroke-width="1.5"/></g></svg></div>
+  <div class="ctrls"><div class="ctl"><label class="cl" for="rt1">Posición del buque en la derrota</label><div class="rg"><input id="rt1" type="range" min="0" max="1000" value="80" style="width:320px"></div></div><label class="ck"><input type="checkbox" id="auto" ${reduced ? '' : 'checked'}> Navegar automáticamente</label></div>
+  <div class="zones" role="group" aria-label="Zonas"></div><div class="hud"><dl></dl><p class="msg info"></p></div></div>`;
+  const path = $('#rt', host), sh = $('#sh', host), L = path.getTotalLength(), inp = $('#rt1', host), zs = $('.zones', host), dl = $('dl', host), msg = $('.msg', host), auto = $('#auto', host);
+  const bounds = [0, .2, .36, .55, .8, 1.001]; zs.innerHTML = Z.map((z, i) => `<button type="button" class="chip" data-i="${i}" aria-pressed="false">${z[0]}</button>`).join('');
+  let p = .08, raf, last = performance.now(), zi = -1; const zoneOf = q => { for (let i = 0; i < 5; i++) if (q < bounds[i + 1]) return i; return 4; };
+  const set = q => { p = q; const pt = path.getPointAtLength(L * Math.min(1, Math.max(0, p))), pt2 = path.getPointAtLength(L * Math.min(1, p + .004)), pt1 = path.getPointAtLength(L * Math.max(0, p - .004)); const a = Math.atan2(pt2.x - pt1.x, -(pt2.y - pt1.y)) * 180 / Math.PI; sh.setAttribute('transform', `translate(${pt.x} ${pt.y}) rotate(${a})`); inp.value = Math.round(p * 1000); const i = zoneOf(p); if (i !== zi) { zi = i; zs.querySelectorAll('button').forEach((b, j) => b.setAttribute('aria-pressed', j === i)); dl.innerHTML = `<div><dt>Zona actual</dt><dd>${Z[i][0]}</dd></div><div><dt>Quién aplica</dt><dd>${Z[i][1]}</dd></div>`; msg.textContent = Z[i][2]; } };
+  zs.onclick = e => { const b = e.target.closest('button'); if (!b) return; auto.checked = false; set(bounds[+b.dataset.i] + .02); };
+  inp.oninput = () => { auto.checked = false; set(inp.value / 1000); };
+  last = performance.now(); const frame = now => { const dt = (now - last) / 1000; last = now; if (auto.checked) { p += dt * 0.05; if (p > 1) p = 0; set(p); } raf = requestAnimationFrame(frame); }; set(p); raf = requestAnimationFrame(frame); cleanups.push(() => cancelAnimationFrame(raf));
+}
+function stageDefs(host) {
+  const T = [['MEC', 'Propulsión mecánica', 'Buque movido por una máquina.'], ['VEL', 'Buque de vela', 'Navega a vela y no utiliza su maquinaria propulsora, si la lleva.'], ['PES', 'Dedicado a la pesca', 'Pesca con artes que restringen su maniobrabilidad; no incluye el curricán.'], ['NUC', 'Sin gobierno', 'Por una circunstancia excepcional es incapaz de maniobrar como exige el RIPA.'], ['RAM', 'Maniobra restringida', 'La naturaleza de su trabajo reduce su capacidad para apartarse (dragado, trabajos submarinos, remolque que lo restrinja fuertemente).'], ['CBD', 'Restringido por su calado', 'Buque de propulsión mecánica cuyo calado, respecto de la profundidad y anchura disponibles, restringe mucho su capacidad de apartarse.']];
+  const tree = [['¿Está fondeado, amarrado a tierra o varado?', 'No está «en navegación»', 'La definición de «en navegación» excluye al buque fondeado, amarrado a tierra o varado.'], ['¿Una circunstancia excepcional le impide maniobrar como exige el RIPA?', 'Buque sin gobierno', 'No puede apartarse de la derrota de otro buque por una circunstancia excepcional (por ejemplo, una avería de gobierno).'], ['¿La naturaleza de su trabajo reduce su capacidad para apartarse?', 'Capacidad de maniobra restringida', 'Dragado, trabajos submarinos o remolque que restrinja fuertemente su capacidad de apartarse.'], ['¿Pesca con artes que restringen su maniobrabilidad?', 'Buque dedicado a la pesca', 'El curricán u otros artes que no restrinjan la maniobra no dan esta condición.'], ['¿Es de propulsión mecánica y su calado, respecto del agua disponible, restringe mucho su capacidad de apartarse?', 'Restringido por su calado', 'Se evalúa la relación entre calado y profundidad y anchura disponibles.'], ['¿Navega a vela sin usar su maquinaria propulsora?', 'Buque de vela', 'Si lleva máquina, no debe estar empleándola.']];
+  host.innerHTML = `<div class="stage"><div class="qa"><div class="cl" style="margin-bottom:8px">Clasificador de categorías · responda según la condición real del buque</div><div class="trail"></div><div class="qbox"></div></div></div>
+  <div class="defs"></div><div class="cmp"><div><b>Sin gobierno</b><p>Incapacidad excepcional: por ejemplo, una avería que impide gobernar o maniobrar.</p></div><div><b>Maniobra restringida</b><p>Limitación asociada a la naturaleza de la operación: dragado, trabajos submarinos o remolque.</p></div><div><b>Restringido por calado</b><p>Limitación por la relación entre el calado y el agua navegable disponible.</p></div></div>`;
+  const box = $('.qbox', host), tr = $('.trail', host); let i = 0; const trail = [];
+  const show = () => { tr.innerHTML = trail.map(t => `<span class="chip">${esc(t)}</span>`).join(''); if (i >= tree.length) { box.innerHTML = `<div class="res"><b>Buque de propulsión mecánica en navegación</b><p>Ninguna condición especial: se aplican las obligaciones generales de la regla 18 y de las reglas 13 a 17.</p></div><p style="margin-top:12px"><button class="btn" type="button" id="rs">↺ Reiniciar</button></p>`; $('#rs', box).onclick = () => { i = 0; trail.length = 0; show(); }; return; } box.innerHTML = `<div class="q">${i + 1}. ${tree[i][0]}</div><div class="yn"><button class="btn pri" id="y" type="button">Sí</button><button class="btn" id="n" type="button">No</button></div>`; $('#y', box).onclick = () => { box.innerHTML = `<div class="res"><b>${tree[i][1]}</b><p>${tree[i][2]}</p></div><p style="margin-top:12px"><button class="btn" type="button" id="rs">↺ Clasificar otro buque</button></p>`; $('#rs', box).onclick = () => { i = 0; trail.length = 0; show(); }; }; $('#n', box).onclick = () => { trail.push(`${i + 1}. No`); i++; show(); }; };
+  show();
+  const dh = $('.defs', host); dh.innerHTML = T.map(t => `<div class="df"><canvas width="140" height="112" data-t="${t[0]}" role="img" aria-label="${t[1]}"></canvas><div><h4>${t[1]}</h4><p>${t[2]}</p></div></div>`).join('');
+  dh.querySelectorAll('canvas').forEach(c => { const x = c.getContext('2d'); x.fillStyle = '#0e3d5e'; x.fillRect(0, 0, 140, 112); x.translate(70, 56); x.rotate(rad(90)); drawShip(x, c.dataset.t, 1.5, { col: '#cfd9e4', boom: 25, size: 1 }); });
+}
+function stageSecciones(host) {
+  host.innerHTML = `<div class="stage"><div class="ctrls"></div><div class="band"></div><div class="hud"><p class="msg info"></p></div></div>`;
+  const P = { vis: 'buena', sight: 'si' };
+  const render = () => { const sight = P.sight === 'si', red = P.vis === 'reducida';
+    $('.band', host).innerHTML = `<div class="sect on"><b>4–10</b><span><strong>Sección I.</strong> Conducta en cualquier condición de visibilidad: vigilancia, velocidad de seguridad, riesgo, maniobras, canales y dispositivos de separación.</span></div>
+    <div class="sect ${sight ? 'on' : ''}"><b>11–18</b><span><strong>Sección II.</strong> Conducta de buques a la vista uno del otro: vela, alcance, vuelta encontrada, cruce, ceder el paso, seguir a rumbo y obligaciones entre categorías.</span></div>
+    <div class="sect ${!sight && red ? 'on' : ''}"><b>19</b><span><strong>Sección III.</strong> Conducta en visibilidad reducida cuando los buques no están a la vista uno del otro.</span></div>`;
+    const m = $('.msg', host); m.className = 'msg ' + (sight ? 'ok' : red ? 'warn' : 'info'); m.textContent = sight ? 'A la vista: rigen la Sección I y la Sección II. Aunque haya niebla, si pueden verse mutuamente se aplican las reglas 12 a 18.' : red ? 'No están a la vista y hay visibilidad reducida: rigen la Sección I y la regla 19. La detección por radar no equivale a estar a la vista.' : 'No están a la vista pero la visibilidad es buena (por ejemplo, ocultos por un cabo): rige la Sección I; la Sección II no se aplica hasta que se vean.'; };
+  const defs = [{ k: 'vis', type: 'seg', label: 'Visibilidad en la zona', opts: [['buena', 'Buena'], ['reducida', 'Reducida (niebla, lluvia, nieve…)']] }, { k: 'sight', type: 'seg', label: '¿Los buques están a la vista uno del otro?', opts: [['si', 'Sí'], ['no', 'No']] }];
+  const ch = () => { buildCtrls($('.ctrls', host), defs, P, ch); render(); }; ch();
+}
+function stageVigilancia(host) {
+  const C = [{ n: 'Velero pequeño', x: -1.2, y: 0.4, ch: P => P.niebla ? [] : ['vista'], c: '#ffd166' }, { n: 'Buque con bocina', x: 0.5, y: 2.6, ch: P => ['radar'].concat(P.niebla ? ['oido'] : ['vista']), c: '#ff9f43' }, { n: 'Buque grande lejano', x: 2.6, y: 3.4, ch: P => ['radar'].concat(P.niebla ? [] : ['vista']), c: '#6fb7ff' }, { n: 'Buque tras el cabo', x: -2.6, y: -0.9, ch: () => ['otros'], c: '#c490ff' }];
+  const N = { vista: 'Vista', oido: 'Oído', radar: 'Radar', otros: 'AIS/VHF' };
+  customStage(host, { label: 'Detección de contactos con distintos medios de vigilancia', P: { vista: true, oido: true, radar: true, otros: true, niebla: true },
+    defs: [{ k: 'vista', type: 'check', label: 'Vista' }, { k: 'oido', type: 'check', label: 'Oído' }, { k: 'radar', type: 'check', label: 'Radar' }, { k: 'otros', type: 'check', label: 'Otros medios (AIS, VHF)' }, { k: 'niebla', type: 'check', label: 'Niebla densa' }],
+    draw: (ctx, cv, P, T) => { const W = cv.width, H = cv.height, u = W / 600, ppn = W / 8, cx = W / 2, cy = H * 0.68, X = x => cx + x * ppn, Y = y => cy - y * ppn;
+      ctx.fillStyle = '#0e3d5e'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#37503a'; ctx.beginPath(); ctx.moveTo(X(-3.9), Y(-0.6)); ctx.lineTo(X(-2.2), Y(-0.9)); ctx.lineTo(X(-1.9), Y(-2.3)); ctx.lineTo(X(-3.9), Y(-2.3)); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1; for (let r = 1; r <= 5; r++) { ctx.beginPath(); ctx.arc(cx, cy, r * ppn, 0, 7); ctx.stroke(); }
+      if (P.radar) { const a = T * 2.2; ctx.fillStyle = 'rgba(124,240,255,.16)'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, 5.2 * ppn, a - 0.55, a); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(124,240,255,.6)'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * 5.2 * ppn, cy + Math.sin(a) * 5.2 * ppn); ctx.stroke(); }
+      if (P.niebla) { const g = ctx.createRadialGradient(cx, cy, 1.0 * ppn, cx, cy, 2.0 * ppn); g.addColorStop(0, 'rgba(210,222,235,0)'); g.addColorStop(1, 'rgba(210,222,235,.55)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+      if (P.vista) { ctx.strokeStyle = 'rgba(245,197,66,.8)'; ctx.setLineDash([2 * u, 5 * u]); ctx.beginPath(); ctx.arc(cx, cy, (P.niebla ? 1 : 5.5) * ppn, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
+      const found = []; C.forEach(c => { const set = c.ch(P).filter(k => P[k]), ok = set.length > 0, x = X(c.x), y = Y(c.y); if (ok) found.push(c); ctx.save(); ctx.translate(x, y); ctx.rotate(rad(c.n.startsWith('Velero') ? 70 : 250)); ctx.globalAlpha = ok ? 1 : 0.22; drawShip(ctx, c.n.startsWith('Velero') ? 'VEL' : 'MEC', u, { col: c.c, boom: 30, size: c.n.includes('grande') ? 1.3 : 1 }); ctx.restore();
+        ctx.font = `600 ${11.5 * u}px "IBM Plex Sans"`; ctx.textAlign = 'left'; ctx.fillStyle = ok ? c.c : 'rgba(255,255,255,.45)'; ctx.fillText((ok ? '✓ ' : '? ') + c.n, x + 18 * u, y - 14 * u); ctx.font = `500 ${10.5 * u}px "IBM Plex Mono"`; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText(ok ? set.map(k => N[k]).join(' + ') : 'NO DETECTADO', x + 18 * u, y + 2 * u);
+        if (P.oido && P.niebla && c.n.startsWith('Buque con bocina')) { for (let i = 0; i < 3; i++) { const e = ((T * 0.7 + i / 3) % 1); ctx.strokeStyle = `rgba(245,197,66,${0.6 * (1 - e)})`; ctx.lineWidth = 2 * u; ctx.beginPath(); ctx.arc(x, y, e * 1.4 * ppn, 0, 7); ctx.stroke(); } } });
+      ctx.save(); ctx.translate(cx, cy); drawShip(ctx, 'MEC', u, { col: '#6fb7ff' }); ctx.restore(); ctx.font = `700 ${13 * u}px "IBM Plex Mono"`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('A (usted)', cx, cy + 34 * u); P._found = found.length; },
+    hud: P => { const n = P._found == null ? 0 : P._found; return { rows: C.map(c => { const s = c.ch(P).filter(k => P[k]); return [c.n, s.length ? s.map(k => N[k]).join(' + ') : 'sin detectar']; }), msg: n === 4 ? 'Con todos los medios activos se detectan los cuatro contactos.' : `Se detectan ${n} de 4 contactos. La vigilancia debe integrar vista, oído, radar y los demás medios apropiados a las circunstancias.`, k: n === 4 ? 'ok' : n >= 2 ? 'warn' : 'bad' }; } });
+}
+function stageVelocidad(host) {
+  const K = { carga: ['Carguero cargado', 0.0045], ligero: ['Buque ligero', 0.0024], rapido: ['Embarcación rápida y ágil', 0.0011] };
+  let run = null; const st = { x: 0, v: 0, a: 0, state: 'idle' };
+  const api = customStage(host, { label: 'Distancia de parada frente a visibilidad', P: { vel: 12, vis: 1.5, k: 'carga' },
+    defs: [{ k: 'vel', type: 'range', label: 'Velocidad del buque (nudos)', min: 3, max: 25, step: 1, fmt: v => v + ' kn' }, { k: 'vis', type: 'range', label: 'Visibilidad (mn)', min: 0.3, max: 4, step: 0.1, fmt: v => v.toFixed(1) + ' mn' }, { k: 'k', type: 'select', label: 'Maniobrabilidad', opts: Object.entries(K).map(([k, v]) => [k, v[0]]) }],
+    onChange: (P, k, a) => { st.state = 'idle'; st.x = 0; },
+    draw: (ctx, cv, P, T, dt) => { const W = cv.width, H = cv.height, u = W / 600, S = 5, ppn = (W - 120 * u) / S, X = x => 40 * u + x * ppn, y0 = H * 0.5, dstop = K[P.k][1] * P.vel * P.vel;
+      if (st.state === 'run') { const v = Math.max(0, st.v - st.a * dt); st.x += (st.v + v) / 2 * dt; st.v = v; if (st.x >= P.vis - 0.08) { st.state = 'hit'; } else if (v <= 0.0005) st.state = 'stopped'; }
+      ctx.fillStyle = '#0e3d5e'; ctx.fillRect(0, 0, W, H);
+      const fx = X(P.vis); const g = ctx.createLinearGradient(fx - 30 * u, 0, fx + 30 * u, 0); g.addColorStop(0, 'rgba(210,222,235,0)'); g.addColorStop(1, 'rgba(210,222,235,.85)'); ctx.fillStyle = g; ctx.fillRect(fx - 30 * u, 0, W, H);
+      ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = `500 ${11 * u}px "IBM Plex Mono"`; ctx.textAlign = 'center'; for (let n = 0; n <= S; n++) { ctx.beginPath(); ctx.moveTo(X(n), y0 - 70 * u); ctx.lineTo(X(n), y0 + 120 * u); ctx.stroke(); ctx.fillText(n + ' mn', X(n), y0 + 136 * u); }
+      /* barras */
+      const bar = (y, w, col, t) => { ctx.fillStyle = col; ctx.fillRect(X(0), y, Math.min(w, S) * ppn, 14 * u); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = `600 ${12 * u}px "IBM Plex Sans"`; ctx.fillText(t, X(0) + 6 * u, y + 7.5 * u); };
+      bar(y0 + 40 * u, P.vis, 'rgba(111,183,255,.75)', 'Visibilidad ' + P.vis.toFixed(1) + ' mn'); bar(y0 + 62 * u, dstop, dstop <= P.vis ? 'rgba(39,224,140,.75)' : 'rgba(255,85,102,.8)', 'Distancia de parada ' + dstop.toFixed(2) + ' mn');
+      const sx = X(st.x); ctx.save(); ctx.translate(sx, y0 - 20 * u); ctx.rotate(rad(90)); drawShip(ctx, 'MEC', u * 1.2, { col: '#6fb7ff' }); ctx.restore();
+      ctx.save(); ctx.translate(fx + 10 * u, y0 - 20 * u); ctx.rotate(rad(30)); drawShip(ctx, 'PES', u, { col: '#ffd166' }); ctx.restore();
+      ctx.strokeStyle = '#f5c542'; ctx.setLineDash([5 * u, 5 * u]); ctx.beginPath(); ctx.moveTo(fx, y0 - 60 * u); ctx.lineTo(fx, y0 + 30 * u); ctx.stroke(); ctx.setLineDash([]); ctx.font = `600 ${12 * u}px "IBM Plex Sans"`; ctx.textAlign = 'center'; const lt = 'obstáculo aparece a la vista', lw = ctx.measureText(lt).width + 14 * u; ctx.fillStyle = 'rgba(6,16,28,.88)'; ctx.fillRect(fx - lw / 2, y0 - 80 * u, lw, 20 * u); ctx.fillStyle = '#f5c542'; ctx.fillText(lt, fx, y0 - 69 * u);
+      if (st.state === 'hit') { ctx.fillStyle = '#ff5566'; ctx.font = `700 ${24 * u}px "Barlow Condensed"`; ctx.fillText('ABORDAJE', X(st.x), y0 - 90 * u); } if (st.state === 'stopped') { ctx.fillStyle = '#27e08c'; ctx.font = `700 ${22 * u}px "Barlow Condensed"`; ctx.fillText('SE DETUVO A TIEMPO', X(st.x), y0 - 90 * u); } },
+    hud: P => { const d = K[P.k][1] * P.vel * P.vel, vmax = Math.sqrt(P.vis * 0.8 / K[P.k][1]); return { rows: [['Distancia de parada', d.toFixed(2) + ' mn'], ['Visibilidad', P.vis.toFixed(1) + ' mn'], ['Velocidad máxima razonable', vmax.toFixed(0) + ' kn'], ['Estado', st.state === 'idle' ? 'listo' : st.state === 'run' ? 'frenando' : st.state === 'hit' ? 'abordaje' : 'detenido']], msg: d <= P.vis * 0.8 ? 'La velocidad es de seguridad: puede detenerse con margen dentro de la visibilidad.' : d <= P.vis ? 'Velocidad límite: se detiene casi al borde de la visibilidad, sin margen.' : 'Velocidad excesiva: no puede detenerse antes del obstáculo. Reduzca la velocidad.', k: d <= P.vis * 0.8 ? 'ok' : d <= P.vis ? 'warn' : 'bad' }; },
+    init: a => { a.extra.innerHTML = '<p style="margin-top:12px"><button class="btn pri" id="sim" type="button">▶ Simular el frenado</button></p><div class="legend"><span><i style="background:#6fb7ff"></i>visibilidad</span><span><i style="background:#27e08c"></i>parada dentro de la visibilidad</span><span><i style="background:#ff5566"></i>parada mayor que la visibilidad</span></div>'; $('#sim', a.extra).onclick = () => { const d = K[a.P.k][1] * a.P.vel * a.P.vel; st.x = 0; st.v = a.P.vel / 3600 * 150; st.a = st.v * st.v / (2 * d); st.state = 'run'; }; } });
+}
+function stageManiobra(host) {
+  const api = simStage(host, { build: crossingScene, P: cross({ dist: 2.2, turn: 60 }), noNight: true, label: 'El buque A cambia de rumbo para ceder el paso al buque B',
+    defs: [{ k: 'act', type: 'seg', label: 'Tipo de maniobra', opts: [['popa', 'Única y clara'], ['ambigua', 'Pequeñas correcciones'], ['tardia', 'Tardía']] }, { k: 'dist', type: 'range', label: 'Distancia a la que maniobra', min: 0.8, max: 3, step: 0.1, fmt: v => v.toFixed(1) + ' mn', when: P => P.act !== 'tardia' }, { k: 'turn', type: 'range', label: 'Amplitud del cambio de rumbo', min: 10, max: 90, step: 5, fmt: v => v + '°' }, { k: 'slow', type: 'check', label: 'Reducir velocidad al maniobrar' }],
+    onChange: () => plot(), init: a => { a.extra.innerHTML = '<div class="cl" style="margin:12px 0 6px">Franquía obtenida según la amplitud del giro (millas)</div><canvas class="plot"></canvas>'; setTimeout(plot, 0); } });
+  function plot() { const cv = $('.plot', host); if (!cv) return; const dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; cv.width = w * dpr; cv.height = h * dpr; const c = cv.getContext('2d'); c.scale(dpr, dpr); const P = api.P, pad = { l: 40, r: 14, t: 12, b: 28 }, pw = w - pad.l - pad.r, ph = h - pad.t - pad.b; const X = a => pad.l + a / 90 * pw, Y = d => pad.t + ph - Math.min(d, 1.6) / 1.6 * ph;
+    c.fillStyle = 'rgba(255,159,67,.1)'; c.fillRect(X(0), pad.t, X(30) - X(0), ph); c.fillStyle = 'rgba(255,159,67,.8)'; c.font = '600 10.5px IBM Plex Mono'; c.fillText('cambio poco perceptible', X(1), pad.t + 12);
+    c.strokeStyle = 'rgba(255,255,255,.16)'; c.fillStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1; c.textAlign = 'right'; for (let d = 0; d <= 1.6; d += 0.4) { c.beginPath(); c.moveTo(pad.l, Y(d)); c.lineTo(w - pad.r, Y(d)); c.stroke(); c.fillText(d.toFixed(1), pad.l - 6, Y(d) + 3); } c.textAlign = 'center'; for (let a = 0; a <= 90; a += 15) c.fillText(a + '°', X(a), h - 10);
+    c.strokeStyle = '#27e08c'; c.setLineDash([5, 4]); c.beginPath(); c.moveTo(pad.l, Y(0.8)); c.lineTo(w - pad.r, Y(0.8)); c.stroke(); c.setLineDash([]); c.fillStyle = '#27e08c'; c.textAlign = 'right'; c.fillText('paso seguro ≥ 0,8 mn', w - pad.r - 4, Y(0.8) - 5);
+    c.strokeStyle = '#f5c542'; c.lineWidth = 2; c.beginPath(); let cur = 0; for (let a = 0; a <= 90; a += 5) { const q = Object.assign({}, P, { turn: Math.max(a, 1), act: P.act === 'ambigua' ? 'ambigua' : P.act }); const s = headless(crossingScene, q), d = a === 0 ? headless(crossingScene, Object.assign({}, P, { act: 'ninguna' })).minR : s.minR; a ? c.lineTo(X(a), Y(d)) : c.moveTo(X(a), Y(d)); if (a === Math.round(P.turn / 5) * 5) cur = d; } c.stroke();
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(X(P.turn), Y(cur), 5, 0, 7); c.fill(); c.fillStyle = '#f5c542'; c.font = '600 11px IBM Plex Mono'; c.textAlign = 'left'; c.fillText(P.turn + '° → ' + cur.toFixed(2) + ' mn', Math.min(X(P.turn) + 8, w - 90), Y(cur) - 8); }
+}
+function stageHierarquia(host) {
+  const keys = ['NUC', 'RAM', 'PES', 'VEL', 'MEC', 'CBD'], short = { NUC: 'Sin gobierno', RAM: 'Maniobra restringida', PES: 'Pesca', VEL: 'Vela', MEC: 'Propulsión mecánica', CBD: 'Restringido por calado' };
+  let api; simStage(host, { build: hierScene, P: { a: 'MEC', b: 'VEL' }, noNight: true, label: 'Obligaciones de apartarse entre dos categorías de buque',
+    defs: [{ k: 'a', type: 'select', label: 'Buque A', opts: keys.map(k => [k, CAT[k].n]) }, { k: 'b', type: 'select', label: 'Buque B', opts: keys.map(k => [k, CAT[k].n]) }],
+    onChange: () => { mark(); }, init: a => { api = a; a.extra.innerHTML = '<div class="cl" style="margin:12px 0 6px">Matriz: la fila debe apartarse de la columna (toque una celda)</div><div class="tblw" style="padding:0"><table class="tbl"></table></div>'; draw(a); mark(); } });
+  function draw(a) { const t = $('.tbl', host); t.innerHTML = '<tr><th class="rh">Debe apartarse…</th>' + keys.map(k => `<th>${short[k]}</th>`).join('') + '</tr>' + keys.map(r => `<tr><th class="rh">${short[r]}</th>` + keys.map(c => { const g = giveWay(r, c), y = g.g === 'A'; return `<td data-r="${r}" data-c="${c}" class="${y ? 'y' : ''}" title="${esc(g.why)}">${y ? '✓' : r === c ? '·' : ''}</td>`; }).join('') + '</tr>').join(''); t.onclick = e => { const td = e.target.closest('td'); if (!td) return; api.P.a = td.dataset.r; api.P.b = td.dataset.c; api.sim.reset(); api.sim.playing = true; const ctrls = $('.ctrls', host); buildCtrls(ctrls, a_defs(), api.P, () => { api.sim.reset(); api.sim.playing = true; mark(); }); mark(); api.redraw(); }; }
+  const a_defs = () => [{ k: 'a', type: 'select', label: 'Buque A', opts: keys.map(k => [k, CAT[k].n]) }, { k: 'b', type: 'select', label: 'Buque B', opts: keys.map(k => [k, CAT[k].n]) }];
+  function mark() { $$('.tbl td', host).forEach(td => td.classList.toggle('sel', td.dataset.r === api.P.a && td.dataset.c === api.P.b)); }
+  function $$(s, r) { return [...(r || document).querySelectorAll(s)]; }
+}
+function stageRadar(host) {
+  const st = { x: 1.3, y: 2.9, drag: false };
+  customStage(host, { sq: true, label: 'Pantalla de radar con un blanco: maniobras que desaconseja la regla 19', P: { niebla: false, alcanzado: false },
+    defs: [{ k: 'niebla', type: 'check', label: 'Oigo señal de niebla a proa del través' }, { k: 'alcanzado', type: 'check', label: 'El blanco es un buque al que estoy alcanzando' }],
+    init: a => { const cv = a.cv, pt = e => { const r = cv.getBoundingClientRect(), W = cv.width, s = W / r.width, px = (e.clientX - r.left) * s, py = (e.clientY - r.top) * s, R = W * 0.44, sc = 6 / R; st.x = Math.max(-5.8, Math.min(5.8, (px - W / 2) * sc)); st.y = Math.max(-5.8, Math.min(5.8, -(py - W / 2) * sc)); }; cv.style.touchAction = 'none'; cv.style.cursor = 'crosshair'; cv.onpointerdown = e => { st.drag = true; cv.setPointerCapture(e.pointerId); pt(e); }; cv.onpointermove = e => { if (st.drag) pt(e); }; cv.onpointerup = () => { st.drag = false; }; a.extra.innerHTML = '<p style="margin-top:10px;color:var(--ink2);font-size:14px">Toque o arrastre sobre la pantalla para situar el blanco. Proa del buque propio hacia arriba.</p>'; },
+    draw: (ctx, cv, P, T) => { const W = cv.width, H = cv.height, u = W / 520, c = W / 2, R = W * 0.44, sc = R / 6, rel = w180(Math.atan2(st.x, st.y) / D2R), fwd = Math.abs(rel) < 90, d = Math.hypot(st.x, st.y);
+      ctx.fillStyle = '#031208'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#041a0d'; ctx.beginPath(); ctx.arc(c, c, R, 0, 7); ctx.fill();
+      /* zonas de maniobra */
+      const wedge = (a, b, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(c, c); ctx.arc(c, c, R, rad(a) - Math.PI / 2, rad(b) - Math.PI / 2); ctx.closePath(); ctx.fill(); };
+      let bad = null; if (!(fwd && P.alcanzado)) { if (fwd) bad = [-90, 0]; else bad = rel > 0 ? [0, 90] : [-90, 0]; }
+      if (fwd) { wedge(-90, 0, bad ? 'rgba(255,85,102,.28)' : 'rgba(39,224,140,.12)'); wedge(0, 90, 'rgba(39,224,140,.14)'); } else { if (rel > 0) { wedge(0, 90, 'rgba(255,85,102,.28)'); wedge(-90, 0, 'rgba(39,224,140,.14)'); } else { wedge(-90, 0, 'rgba(255,85,102,.28)'); wedge(0, 90, 'rgba(39,224,140,.14)'); } }
+      ctx.strokeStyle = 'rgba(77,255,176,.28)'; ctx.lineWidth = 1; for (let r = 1; r <= 6; r++) { ctx.beginPath(); ctx.arc(c, c, r * sc, 0, 7); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(c - R, c); ctx.lineTo(c + R, c); ctx.moveTo(c, c - R); ctx.lineTo(c, c + R); ctx.stroke();
+      ctx.fillStyle = 'rgba(77,255,176,.7)'; ctx.font = `500 ${10.5 * u}px "IBM Plex Mono"`; ctx.textAlign = 'left'; for (let r = 2; r <= 6; r += 2) ctx.fillText(r + ' mn', c + 4 * u, c - r * sc - 3 * u);
+      const a = T * 1.8; const g = ctx.createConicGradient ? ctx.createConicGradient(a - Math.PI / 2 - 0.6, c, c) : null; ctx.save(); ctx.beginPath(); ctx.arc(c, c, R, 0, 7); ctx.clip(); if (g) { g.addColorStop(0, 'rgba(77,255,176,0)'); g.addColorStop(0.1, 'rgba(77,255,176,.28)'); g.addColorStop(0.1001, 'rgba(77,255,176,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); } ctx.restore(); ctx.strokeStyle = 'rgba(77,255,176,.9)'; ctx.lineWidth = 2 * u; ctx.beginPath(); ctx.moveTo(c, c); ctx.lineTo(c + Math.sin(a) * R, c - Math.cos(a) * R); ctx.stroke();
+      /* blanco */
+      const tx = c + st.x * sc, ty = c - st.y * sc; ctx.fillStyle = '#7cf0ff'; ctx.beginPath(); ctx.arc(tx, ty, 6 * u, 0, 7); ctx.fill(); ctx.strokeStyle = '#7cf0ff'; ctx.lineWidth = 1.5 * u; ctx.beginPath(); ctx.arc(tx, ty, 12 * u + Math.sin(T * 4) * 2 * u, 0, 7); ctx.stroke(); ctx.setLineDash([4 * u, 4 * u]); ctx.beginPath(); ctx.moveTo(c, c); ctx.lineTo(tx, ty); ctx.stroke(); ctx.setLineDash([]);
+      ctx.save(); ctx.translate(c, c); drawShip(ctx, 'MEC', u * 0.9, { col: '#6fb7ff' }); ctx.restore(); ctx.fillStyle = '#fff'; ctx.font = `600 ${11.5 * u}px "IBM Plex Sans"`; ctx.textAlign = 'center'; ctx.fillText(bad ? (bad[0] < 0 ? 'EVITAR CAER A BABOR' : 'EVITAR CAER A ESTRIBOR') : 'SIN RESTRICCIÓN ESPECIAL', c + (bad ? (bad[0] < 0 ? -R * 0.55 : R * 0.55) : 0), c + (bad ? -R * 0.55 : -R * 0.82)); ctx.fillStyle = 'rgba(77,255,176,.8)'; ctx.fillText('N proa', c, 18 * u); },
+    hud: P => { const rel = w180(Math.atan2(st.x, st.y) / D2R), fwd = Math.abs(rel) < 90, d = Math.hypot(st.x, st.y), side = rel >= 0 ? 'estribor' : 'babor'; let m, k = 'info';
+      if (P.niebla && fwd) { m = 'Señal de niebla aparentemente a proa del través: reducir a la velocidad mínima de gobierno; si es necesario, suprimir la arrancada y navegar con extremo cuidado hasta que pase el peligro.'; k = 'warn'; }
+      else if (fwd) m = P.alcanzado ? 'Blanco a proa del través pero se le alcanza: la restricción de caer a babor no se aplica.' : 'Blanco a proa del través: evite, en lo posible, caer a babor. La maniobra preferible es hacia estribor, o reducir velocidad.';
+      else m = `Blanco por el través o la popa, por ${side}: evite alterar el rumbo hacia él (hacia ${side}).`;
+      return { rows: [['Marcación del blanco', Math.abs(rel).toFixed(0) + '° por ' + side], ['Distancia', d.toFixed(1) + ' mn'], ['Posición', fwd ? 'a proa del través' : 'por el través o la popa'], ['Velocidad', 'segura · máquinas listas']], msg: m, k }; } });
+}
+
+/* ===== Páginas generales ===== */
+const ORDER = ['inicio', ...Array.from({ length: 19 }, (_, i) => 'regla-' + (i + 1)), 'metodo', 'errores', 'conclusiones'];
+const GROUPS = [['Parte A · Generalidades', [1, 2, 3]], ['Parte B · Sección I · Cualquier visibilidad', [4, 5, 6, 7, 8, 9, 10]], ['Parte B · Sección II · A la vista', [11, 12, 13, 14, 15, 16, 17, 18]], ['Parte B · Sección III · Visibilidad reducida', [19]]];
+const TITLES = { inicio: 'Inicio', metodo: 'Método de seis pasos', errores: 'Errores frecuentes', conclusiones: 'Conclusiones' };
+function titleOf(id) { return id.startsWith('regla-') ? `Regla ${id.slice(6)} · ${R[+id.slice(6)].title}` : TITLES[id]; }
+function buildNav() {
+  const nav = $('.nav'); let h = `<a href="#inicio" data-id="inicio"><b>★</b>Inicio</a>`;
+  GROUPS.forEach(([g, ns]) => { h += `<div class="grp">${g}</div>` + ns.map(n => `<a href="#regla-${n}" data-id="regla-${n}"><b>${n}</b>${R[n].title}</a>`).join(''); });
+  h += `<div class="grp">Síntesis</div><a href="#metodo" data-id="metodo"><b>6</b>Método de seis pasos</a><a href="#errores" data-id="errores"><b>!</b>Errores frecuentes</a><a href="#conclusiones" data-id="conclusiones"><b>✓</b>Conclusiones</a>`; nav.innerHTML = h;
+}
+function pager(id) { const i = ORDER.indexOf(id), p = ORDER[i - 1], n = ORDER[i + 1]; return `<nav class="pager" aria-label="Navegación entre secciones">${p ? `<a href="#${p}"><small>← Anterior</small>${esc(titleOf(p))}</a>` : '<span></span>'}${n ? `<a href="#${n}"><small>Siguiente →</small>${esc(titleOf(n))}</a>` : ''}</nav>`; }
+
+function pageRule(n) {
+  const r = R[n], v = $('#view');
+  v.innerHTML = `<header class="rhead"><div class="rnum" aria-hidden="true">${n}</div><div><p class="eyebrow">${PARTS[r.part]}</p><h1>${r.title}</h1><p class="lead">${r.lead}</p></div></header>
+  <div class="work"><div class="sh" id="sh"></div><aside><div class="card"><h3>Qué establece</h3><ul>${r.est.map(e => `<li>${e}</li>`).join('')}</ul></div><div class="card"><h3>Por qué importa</h3><p>${r.imp}</p></div><div class="card"><h3>Cómo se aplica</h3><p>${r.apl}</p></div><div class="card"><h3>Reglas relacionadas</h3><div class="chips">${r.rel.map(link).join('')}</div></div></aside></div>${pager('regla-' + n)}`;
+  r.stage($('#sh'));
+}
+function pageInicio() {
+  const v = $('#view'); const hs = Array.from({ length: 19 }, (_, i) => i + 1);
+  v.innerHTML = `<div class="hero"><div><p class="eyebrow">Reglamento Internacional para Prevenir los Abordajes · COLREG 1972</p><h1>RIPA: <em>reglas 1 a 19</em> en movimiento</h1><p class="lead">Cada regla se explica con un diagrama o una simulación que puede pausar, reiniciar y modificar. Los buques de color azul y amarillo son A y B; las bandas verdes y rojas muestran los sectores de luces de costado.</p><p style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn pri" href="#regla-1" style="text-decoration:none">Comenzar por la regla 1</a><a class="btn" href="#regla-15" style="text-decoration:none">Ir al cruce (regla 15)</a></p></div><div><div class="cvw"><canvas aria-label="Animación de dos buques en situación de cruce"></canvas></div></div></div>
+  <div class="parts"><div class="part on"><span>Parte A</span><b>1–3</b>Generalidades</div><div class="part on"><span>Parte B</span><b>4–19</b>Rumbo y gobierno</div><div class="part off"><span>Parte C · fuera de alcance</span><b>20–31</b>Luces y marcas</div><div class="part off"><span>Parte D · fuera de alcance</span><b>32–37</b>Señales acústicas y luminosas</div></div>
+  <p class="lead" style="margin-bottom:6px">Idea rectora: el RIPA no es una tabla automática de «derechos de paso»; es un sistema de vigilancia, evaluación continua y maniobra segura.</p>
+  <h2 class="sec-h">Las 19 reglas</h2><div class="rgrid">${hs.map(n => `<a class="rg1" href="#regla-${n}"><b>${n}</b><span>${R[n].title}</span></a>`).join('')}</div>
+  <h2 class="sec-h">Casos de navegación · ¿qué regla activa el análisis?</h2><div class="cases">
+  <a class="case" href="#regla-7"><small>A · Reglas 5, 6 y 7</small><h4>Demora constante</h4><p>Mantener vigilancia, evaluar el riesgo y ajustar la velocidad; ante la duda, asumir que existe riesgo.</p></a>
+  <a class="case" href="#regla-14"><small>B · Regla 14</small><h4>Dos buques de frente</h4><p>Ambos buques de propulsión mecánica caen a estribor para pasar por babor del otro.</p></a>
+  <a class="case" href="#regla-15"><small>C · Reglas 15–17</small><h4>Otro buque por estribor</h4><p>Quien lo tiene por estribor cede el paso; el otro sigue a rumbo, sin dejar de vigilar.</p></a>
+  <a class="case" href="#regla-13"><small>D · Regla 13</small><h4>Alcance por popa</h4><p>El buque que alcanza permanece apartado hasta pasar y quedar en franquía.</p></a>
+  <a class="case" href="#regla-19"><small>E · Regla 19</small><h4>Niebla y contacto de radar</h4><p>Velocidad segura, máquinas listas, evaluar la aproximación y evitar maniobras desaconsejadas.</p></a>
+  <a class="case" href="#metodo"><small>Síntesis</small><h4>Método de seis pasos</h4><p>Vigilar, detectar, evaluar, decidir, maniobrar y verificar.</p></a></div>
+  <p class="lead" style="margin-top:22px;font-size:14px;color:var(--ink3)">Alcance: Partes A y B (reglas 1 a 19). Material didáctico: para operaciones reales, consulte la versión oficial vigente y las disposiciones locales aplicables.</p>`;
+  /* animación de portada */
+  const cv = $('canvas', v), wrap = $('.cvw', v), sim = new Sim(cv, crossingScene, cross({ noTag: false })); sim.night = false; sim.playing = !reduced; sim.loop = true; sim.rate = 1.1; let raf, last = performance.now();
+  const fit = () => { fitCanvas(cv, wrap); sim.draw(); }; const ro = new ResizeObserver(fit); ro.observe(wrap); fit();
+  const fr = now => { sim.advance((now - last) / 1000); last = now; sim.draw(); raf = requestAnimationFrame(fr); }; raf = requestAnimationFrame(fr); cleanups.push(() => { cancelAnimationFrame(raf); ro.disconnect(); });
+}
+function pageMetodo() {
+  const v = $('#view'); v.innerHTML = `<header class="rhead"><div class="rnum" aria-hidden="true">6</div><div><p class="eyebrow">Síntesis operativa</p><h1>Método práctico para prevenir un abordaje</h1><p class="lead">El proceso es continuo: después de maniobrar se sigue comprobando la situación hasta que el otro buque esté pasado y en franquía. Toque un paso para ir a ese momento de la simulación.</p></div></header><div class="work"><div id="sh"></div><aside><div class="card"><h3>Qué hace cada paso</h3><ul><li><strong>Vigilar</strong>: vista, oído y radar (regla 5).</li><li><strong>Detectar</strong>: identificar blancos y su movimiento.</li><li><strong>Evaluar</strong>: demora, CPA/TCPA y contexto (reglas 6 y 7).</li><li><strong>Decidir</strong>: regla aplicable y riesgo (reglas 11 a 19).</li><li><strong>Maniobrar</strong>: anticipado, claro y decidido (reglas 8 y 16).</li><li><strong>Verificar</strong>: paso seguro hasta la franquía.</li></ul></div><div class="card"><h3>Reglas relacionadas</h3><div class="chips">${[5, 7, 8, 15, 16, 17].map(link).join('')}</div></div></aside></div>${pager('metodo')}`;
+  const api = simStage($('#sh'), { build: metodoScene, P: {}, noNight: true, label: 'Aplicación de los seis pasos en un cruce',
+    tick: (sim, host) => { const k = sim.sc.phase(sim.t); host.querySelectorAll('.step').forEach((s, i) => { s.classList.toggle('on', i === k); s.classList.toggle('done', i < k); }); },
+    init: a => { const st = document.createElement('div'); st.className = 'steps'; st.innerHTML = PASOS.map((p, i) => `<button type="button" class="step" data-i="${i}"><b>${i + 1}</b><span>${p[1]}</span></button>`).join(''); a.host.querySelector('.stage').insertBefore(st, a.host.querySelector('.ctrls')); st.onclick = e => { const b = e.target.closest('.step'); if (b) a.seek(PASOS[+b.dataset.i][0] + 0.05); }; } });
+}
+function pageErrores() {
+  const E = [['Confundir «no estorbar» con exención', 'La obligación de evitar el abordaje continúa para todos. El buque cuyo tránsito no debe estorbarse sigue obligado a cumplir las reglas de la Parte B.', [8]], ['Esperar hasta el último momento', 'La maniobra debe ser temprana, clara y decidida. Una acción tardía reduce la franquía y las opciones.', [8, 16]], ['Hacer pequeñas correcciones sucesivas', 'Pueden ser ambiguas e imperceptibles para el otro buque; la regla 8 pide cambios de rumbo o de velocidad perceptibles.', [8, 16]], ['Confiar únicamente en el radar', 'La vigilancia es visual, auditiva y con todos los medios apropiados. Un eco de radar no equivale a estar a la vista.', [5, 7, 11]], ['Tratar la prioridad como absoluta', 'Las reglas 2, 8 y 17 exigen valorar las circunstancias y actuar para evitar el abordaje, incluso apartándose de una regla ante un peligro inmediato.', [2, 17]], ['Clasificar un remolcador automáticamente', 'La maniobra restringida depende de si la operación restringe fuertemente su capacidad de apartarse; no de su nombre o tamaño.', [3, 18]]];
+  $('#view').innerHTML = `<header class="rhead"><div class="rnum" aria-hidden="true">!</div><div><p class="eyebrow">Criterio marinero</p><h1>Errores frecuentes al interpretar el RIPA</h1><p class="lead">Seis errores que explican buena parte de los abordajes por mala aplicación del reglamento. Toque cada tarjeta para ver la corrección.</p></div></header><div class="errs">${E.map((e, i) => `<div class="err"><button type="button" aria-expanded="false"><span class="n">${i + 1}</span><span><h3>${e[0]}</h3></span></button><div class="ans"><p>${e[1]}</p><div class="chips">${e[2].map(link).join('')}</div></div></div>`).join('')}</div>${pager('errores')}`;
+  document.querySelectorAll('.err button').forEach(b => b.onclick = () => { const p = b.closest('.err'); p.classList.toggle('open'); b.setAttribute('aria-expanded', p.classList.contains('open')); });
+}
+function pageConclusiones() {
+  const C = [['Un reglamento de ámbito amplio', 'El RIPA se aplica en alta mar y aguas comunicadas con ella, y convive con reglas especiales compatibles (reglas 1 a 3).', [1]], ['La responsabilidad no desaparece', 'Cumplir formalmente una regla no exime de la responsabilidad del capitán y la dotación (regla 2).', [2]], ['Vigilancia, velocidad y riesgo', 'La vigilancia, la velocidad de seguridad y la determinación temprana del riesgo son permanentes (reglas 5 a 7).', [5, 6, 7]], ['Maniobras que se entienden', 'Las maniobras deben ser anticipadas, claras, decididas y verificadas hasta quedar en franquía (reglas 8 y 16).', [8, 16]], ['Obligaciones que se leen en conjunto', 'Ceder el paso, seguir a rumbo y no estorbar se interpretan conjuntamente, sin tratar la prioridad como absoluta (reglas 15 a 18).', [15, 17, 18]], ['La mejor maniobra evita la emergencia', 'La mejor maniobra es la que evita que una situación de riesgo llegue a convertirse en emergencia.', [19]]];
+  $('#view').innerHTML = `<header class="rhead"><div class="rnum" aria-hidden="true">✓</div><div><p class="eyebrow">Cierre</p><h1>Conclusiones: lo que debe quedar claro</h1><p class="lead">Seis principios que articulan las Partes A y B del RIPA.</p></div></header><ol class="concl">${C.map(c => `<li><div><b>${c[0]}</b><p>${c[1]}</p><div class="chips" style="margin-top:8px">${c[2].map(link).join('')}</div></div></li>`).join('')}</ol><p class="lead" style="margin-top:22px">Alcance: reglas 1 a 19. Para operaciones reales, consulte la versión oficial vigente y las disposiciones locales aplicables.</p>${pager('conclusiones')}`;
+}
+
+/* ===== Enrutador ===== */
+function route() {
+  cleanups.forEach(f => f()); cleanups = [];
+  let id = location.hash.slice(1); if (!ORDER.includes(id)) id = 'inicio';
+  document.querySelectorAll('.nav a').forEach(a => { if (a.dataset.id === id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  if (id === 'inicio') pageInicio(); else if (id.startsWith('regla-')) pageRule(+id.slice(6)); else if (id === 'metodo') pageMetodo(); else if (id === 'errores') pageErrores(); else pageConclusiones();
+  document.title = id === 'inicio' ? 'Atlas del RIPA' : titleOf(id) + ' · Atlas del RIPA'; document.body.classList.remove('nav-open'); window.scrollTo(0, 0);
+  const cur = document.querySelector('.nav a[aria-current]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
+}
+buildNav(); window.addEventListener('hashchange', route);
+$('#menu').onclick = () => document.body.classList.toggle('nav-open');
+document.addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return; const i = ORDER.indexOf(location.hash.slice(1) || 'inicio'); if (e.key === 'ArrowRight' && i < ORDER.length - 1) location.hash = ORDER[i + 1]; if (e.key === 'ArrowLeft' && i > 0) location.hash = ORDER[i - 1]; });
+route();
+
+</script>
+</body>
+</html>
